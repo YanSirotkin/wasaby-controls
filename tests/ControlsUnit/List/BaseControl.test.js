@@ -74,6 +74,21 @@ define([
       afterEach(function() {
          sandbox.restore();
       });
+      it('remove incorrect config', async function() {
+         var cfg = {
+            viewName: 'Controls/List/ListView',
+            keyProperty: 'id',
+            viewModelConstructor: lists.ListViewModel,
+            items: new collection.RecordSet({
+               keyProperty: 'id',
+               rawData: data
+            })
+         };
+         var baseControl = new lists.BaseControl(cfg);
+         baseControl.saveOptions(cfg);
+         await baseControl._beforeMount(cfg);
+         assert.equal(baseControl._listViewModel.getItems(), null);
+      });
       it('life cycle', function(done) {
          var dataLoadFired = false;
          var filter = {
@@ -203,6 +218,45 @@ define([
          assert.deepEqual(lists.BaseControl._private.getSortingOnChange(sortingDESC, 'test'), sortingASC);
          assert.deepEqual(lists.BaseControl._private.getSortingOnChange(sortingASC, 'test'), emptySorting);
          assert.deepEqual(lists.BaseControl._private.getSortingOnChange(multiSorting, 'test', 'single'), sortingDESC);
+      });
+
+      it('_private::needLoadNextPageAfterLoad', function() {
+         let list = new collection.RecordSet({
+            rawData: [
+               {id: 0, title: 'test'}
+            ]
+         });
+         let emptyList = new collection.RecordSet({});
+         let metaMore = {
+            more: true
+         };
+         let infinityNavigation = {
+            view: 'infinity',
+            viewConfig: {}
+         };
+         let maxCountNaviation = {
+            view: 'maxCount',
+            viewConfig: {
+               maxCountValue: 10
+            }
+         };
+         let itemsCount = 1;
+         let listViewModel = {
+            getCount: () => itemsCount
+         };
+         emptyList.setMetaData(metaMore);
+         list.setMetaData(metaMore);
+
+         assert.isTrue(lists.BaseControl._private.needLoadNextPageAfterLoad(emptyList, listViewModel, infinityNavigation));
+         assert.isTrue(lists.BaseControl._private.needLoadNextPageAfterLoad(emptyList, listViewModel, maxCountNaviation));
+
+         assert.isFalse(lists.BaseControl._private.needLoadNextPageAfterLoad(list, listViewModel, infinityNavigation));
+         assert.isTrue(lists.BaseControl._private.needLoadNextPageAfterLoad(list, listViewModel, maxCountNaviation));
+
+
+         itemsCount = 20;
+         assert.isFalse(lists.BaseControl._private.needLoadNextPageAfterLoad(list, listViewModel, infinityNavigation));
+         assert.isFalse(lists.BaseControl._private.needLoadNextPageAfterLoad(list, listViewModel, maxCountNaviation));
       });
 
       it('setHasMoreData', async function() {
@@ -2295,12 +2349,11 @@ define([
          ctrl._onCheckBoxClick({}, 1, 1);
       });
 
-      it('_onItemClick', function() {
+      it('_onItemClick', async function() {
          var cfg = {
             keyProperty: 'id',
             viewName: 'Controls/List/ListView',
             source: source,
-            items: rs,
             viewModelConstructor: lists.ListViewModel
          };
          var originalEvent = {
@@ -2321,10 +2374,10 @@ define([
          };
          var ctrl = new lists.BaseControl(cfg);
          ctrl.saveOptions(cfg);
-         ctrl._beforeMount(cfg);
-         ctrl._onItemClick(event, rs.at(2), originalEvent);
+         await ctrl._beforeMount(cfg);
+         ctrl._onItemClick(event, ctrl._listViewModel.getItems().at(2), originalEvent);
          assert.isTrue(stopPropagationCalled);
-         assert.equal(rs.at(2), ctrl._listViewModel.getMarkedItem().getContents());
+         assert.equal(ctrl._listViewModel.getItems().at(2), ctrl._listViewModel.getMarkedItem().getContents());
       });
       it ('needFooterPadding', function() {
          let cfg = {
@@ -2881,7 +2934,7 @@ define([
          assert.strictEqual(notifiedEvent, 'dragEnter');
          assert.strictEqual(notifiedEntity, goodDragObject.entity);
       });
-      it('native drag prevent only by native "dragstart" event', function() {
+      it('native drag prevent only by native "dragstart" event', async function() {
          let isDefaultPrevented = false;
 
          const
@@ -2910,7 +2963,6 @@ define([
                      pagingMode: 'direct'
                   }
                },
-               items: rs,
                selectedKeys: [null],
                excludedKeys: [],
                readOnly: false,
@@ -2931,7 +2983,7 @@ define([
             };
 
          ctrl.saveOptions(cfg);
-         ctrl._beforeMount(cfg);
+         await ctrl._beforeMount(cfg);
 
          // по mouseDown нельзя вызывать preventDefault, иначе сломается фокусировка
          ctrl._itemMouseDown({}, { key: 1 }, fakeMouseDown);
@@ -2942,7 +2994,7 @@ define([
          assert.isTrue(isDefaultPrevented);
       });
 
-      it('_itemMouseDown places dragKey first', () => {
+      it('_itemMouseDown places dragKey first', async () => {
          let dragKeys;
          const
             cfg = {
@@ -2970,7 +3022,6 @@ define([
                      pagingMode: 'direct'
                   }
                },
-               items: rs,
                selectedKeys: [null],
                excludedKeys: [],
                readOnly: false,
@@ -2988,7 +3039,7 @@ define([
             };
 
          ctrl.saveOptions(cfg);
-         ctrl._beforeMount(cfg);
+         await ctrl._beforeMount(cfg);
 
          ctrl._notify = (eventName, eventArgs) => {
             if (eventName === 'dragStart') {
@@ -4285,7 +4336,7 @@ define([
        it('_getLoadingIndicatorClasses', function () {
 
            function testCaseWithArgs(indicatorState) {
-               return lists.BaseControl._private.getLoadingIndicatorClasses(indicatorState);
+               return lists.BaseControl._private.getLoadingIndicatorClasses(true, indicatorState);
            }
 
            assert.equal('controls-BaseControl__loadingIndicator controls-BaseControl__loadingIndicator__state-all', testCaseWithArgs('all'));
@@ -4716,7 +4767,7 @@ define([
             lists.BaseControl._private.resetPagingNavigation(instance);
             assert.deepEqual(instance, {_currentPage: 1, _knownPagesCount: 1});
 
-            lists.BaseControl._private.resetPagingNavigation(instance, {sourceConfig: {page:2}});
+            lists.BaseControl._private.resetPagingNavigation(instance, {sourceConfig: {page:1}});
             assert.deepEqual(instance, {_currentPage: 2, _knownPagesCount: 1});
 
          });

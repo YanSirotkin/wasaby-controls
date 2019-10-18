@@ -299,11 +299,11 @@ define([
                ]
             ];
             var goodHtml = '<div><p>some test</p></div>';
-            var goodError = 'Невалидное значение атрибута class, ожидается строковый тип.';
+            var goodError = 'Ошибка разбора JsonML: Невалидное значение атрибута class, ожидается строковое значение. Ошибочный узел: {"class":true}';
             var checkHtml = decorator.Converter.jsonToHtml(json);
-            var chechError = errorArray.shift()[1];
+            var checkError = errorArray.shift()[1];
             equalsHtml(goodHtml, checkHtml);
-            assert.equal(goodError, chechError);
+            assert.ok(checkError.indexOf(goodError) !== -1);
          });
 
          it('invalid JsonML', function() {
@@ -318,11 +318,25 @@ define([
                ]
             ];
             var goodHtml = '<div><p class="myClass"></p></div>';
-            var goodError = 'Узел в JsonML должен быть строкой или массивом.';
+            var goodError = 'Ошибка разбора JsonML: Узел в JsonML должен быть строкой или массивом. Ошибочный узел: {"text":"some text"}';
             var checkHtml = decorator.Converter.jsonToHtml(json);
-            var chechError = errorArray.shift()[1];
+            var checkError = errorArray.shift()[1];
             equalsHtml(goodHtml, checkHtml);
-            assert.equal(goodError, chechError);
+            assert.ok(checkError.indexOf(goodError) !== -1);
+         });
+
+         it('link to id on current page', function () {
+            var json = [
+               ['a',
+                  {
+                     href: '#someId'
+                  },
+                  'goto'
+               ]
+            ];
+            var goodHtml = '<div><a href="#someId">goto</a></div>';
+            var checkHtml = decorator.Converter.jsonToHtml(json);
+            assert.equal(goodHtml, checkHtml);
          });
 
          it('all valid tags and attributes', function() {
@@ -557,6 +571,9 @@ define([
                      any: true,
                      tag: true,
                      link: true,
+                     additional: {
+                        add: true
+                     },
                      script: true
                   },
                   validAttributes: {
@@ -570,12 +587,14 @@ define([
                   ['any', { name: 'name', value: 'value', id: 'id' }],
                   ['tag', 'inner text'],
                   ['link'],
+                  ['additional', { add: 'add', name: 'name', id: 'id' }],
                   ['script', 'alert(123);']
                ],
                goodHtml =
                   '<any name="name" value="value"></any>' +
                   '<tag>inner text</tag>' +
                   '<link />' +
+                  '<additional add="add" name="name"></additional>' +
                   '<script>alert(123);</script>',
                checkHtml = template({
                   _options: {
