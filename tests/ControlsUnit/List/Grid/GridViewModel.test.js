@@ -489,6 +489,37 @@ define(['Controls/grid', 'Core/core-merge', 'Types/collection', 'Types/entity', 
                'Incorrect value "GridViewModel._private.getPaddingCellClasses(paramsWithMultiselect)".');
 
          });
+         it('getPaddingCellClasses for breadCrumbs in table layout should not add margin class', function () {
+            const columnsWithMultiSelect = [{}].concat(clone(gridColumns));
+            columnsWithMultiSelect[1].isBreadCrumbs = true;
+
+            const paramsWithMultiselect = {
+               columns: columnsWithMultiSelect,
+               multiSelectVisibility: true,
+               isBreadCrumbs: true,
+               isTableLayout: true,
+               itemPadding: {
+                  left: 'XL',
+                  right: 'L',
+                  top: 'L',
+                  bottom: 'L'
+               },
+               columnIndex: 1,
+               rowIndex: 0,
+               style: 'default'
+            };
+            assert.equal(
+                ' controls-Grid__cell_spacingRight controls-Grid__cell_spacingFirstCol_null controls-Grid__cell_default controls-Grid__row-cell_rowSpacingTop_l controls-Grid__row-cell_rowSpacingBottom_l',
+                gridMod.GridViewModel._private.getPaddingHeaderCellClasses(paramsWithMultiselect)
+            );
+
+            paramsWithMultiselect.isTableLayout = false;
+
+            assert.equal(
+                ' controls-Grid__cell_spacingRight controls-Grid__cell_spacingFirstCol_null controls-Grid__cell_spacingBackButton_with_multiSelection controls-Grid__cell_default controls-Grid__row-cell_rowSpacingTop_l controls-Grid__row-cell_rowSpacingBottom_l',
+                gridMod.GridViewModel._private.getPaddingHeaderCellClasses(paramsWithMultiselect)
+            );
+         });
          it('getSortingDirectionByProp', function() {
             assert.equal(gridMod.GridViewModel._private.getSortingDirectionByProp([{test: 'ASC'}, {test2: 'DESC'}], 'test'), 'ASC');
             assert.equal(gridMod.GridViewModel._private.getSortingDirectionByProp([{test: 'ASC'}, {test2: 'DESC'}], 'test2'), 'DESC');
@@ -1239,6 +1270,25 @@ define(['Controls/grid', 'Core/core-merge', 'Types/collection', 'Types/entity', 
             const iData = gridViewModel.getItemDataByItem(gridViewModel.getDisplay().at(2));
             assert.equal(iData.rowIndex, 4);
             gridViewModel._isPartialGridSupport = native;
+         });
+
+         it('isLastColumn', function () {
+            // has multiselect, 5 columns
+            const itemData = gridViewModel.getItemDataByItem(gridViewModel.getDisplay().at(2));
+
+            // checkBox
+            assert.equal(itemData.hasNextColumn(), true);
+            assert.equal(itemData.hasNextColumn(true), true);
+
+            itemData.goToNextColumn();
+
+            assert.equal(itemData.hasNextColumn(), true);
+            assert.equal(itemData.hasNextColumn(true), true);
+
+            itemData.goToNextColumn();
+
+            assert.equal(itemData.hasNextColumn(), true);
+            assert.equal(itemData.hasNextColumn(true), false);
          });
 
          it('setEditingItemData', function () {

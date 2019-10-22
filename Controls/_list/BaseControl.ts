@@ -1461,10 +1461,15 @@ var _private = {
     isBlockedForLoading(loadingIndicatorState): boolean {
         return loadingIndicatorState === 'all';
     },
-    getLoadingIndicatorClasses(hasItems: boolean, loadingIndicatorState: 'all' | 'down' | 'up'): string {
+    getLoadingIndicatorClasses(cfg: {
+        hasItems: boolean,
+        hasPaging: boolean,
+        loadingIndicatorState: 'all' | 'down' | 'up'
+    }): string {
         return CssClassList.add('controls-BaseControl__loadingIndicator')
-            .add(`controls-BaseControl__loadingIndicator__state-${loadingIndicatorState}`)
-            .add('controls-BaseControl_empty__loadingIndicator__state-down', !hasItems && loadingIndicatorState === 'down')
+            .add(`controls-BaseControl__loadingIndicator__state-${cfg.loadingIndicatorState}`)
+            .add('controls-BaseControl_empty__loadingIndicator__state-down', !cfg.hasItems && cfg.loadingIndicatorState === 'down')
+            .add('controls-BaseControl_withPaging__loadingIndicator__state-down', cfg.loadingIndicatorState === 'down' && cfg.hasPaging && cfg.hasItems)
             .compile();
     },
     hasItemActions: function(itemActions, itemActionsProperty) {
@@ -2437,7 +2442,7 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         this._listViewModel.setDragEntity(null);
     },
 
-    _itemMouseEnter: function(event, itemData) {
+    _itemMouseEnter: function(event, itemData, nativeEvent) {
         var
             dragPosition,
             dragEntity = this._listViewModel.getDragEntity();
@@ -2449,6 +2454,7 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
                 this._listViewModel.setDragTargetPosition(dragPosition);
             }
         }
+        this._notify('itemMouseEnter', [itemData, nativeEvent]);
     },
 
     _itemMouseMove(event, itemData, nativeEvent) {
@@ -2488,7 +2494,11 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
 
     _getLoadingIndicatorClasses(): string {
         const hasItems = !!this._items && !!this._items.getCount();
-        return _private.getLoadingIndicatorClasses(hasItems, this._loadingIndicatorState);
+        return _private.getLoadingIndicatorClasses({
+            hasItems,
+            hasPaging: !!this._pagingVisible,
+            loadingIndicatorState: this._loadingIndicatorState
+        });
     },
     _onHoveredItemChanged: function(e, item, container) {
         if (this._hasItemActions){
