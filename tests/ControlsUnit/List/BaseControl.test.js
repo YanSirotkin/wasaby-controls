@@ -1469,6 +1469,11 @@ define([
          }
       };
       it('ScrollPagingController', function(done) {
+         var heightParams = {
+            scrollHeight: 400,
+            clientHeight: 1000
+         };
+
          var rs = new collection.RecordSet({
             keyProperty: 'id',
             rawData: data
@@ -1509,7 +1514,7 @@ define([
 
          ctrl._children = triggers;
          // эмулируем появление скролла
-         lists.BaseControl._private.onScrollShow(ctrl);
+         lists.BaseControl._private.onScrollShow(ctrl, heightParams);
 
          // скроллпэйджиг контроллер создается асинхронном
          setTimeout(function() {
@@ -1567,7 +1572,10 @@ define([
              getBoundingClientRect: () => ({}),
              clientHeight: 480
          };
-         lists.BaseControl._private.onScrollShow(bc);
+         lists.BaseControl._private.onScrollShow(bc, {
+            scrollHeight: 400,
+            clientHeight: 1000
+         });
          bc._onViewPortResize(bc, 600);
          assert.deepEqual(bc._loadOffset, {top: 200, bottom: 200});
 
@@ -1600,6 +1608,10 @@ define([
                }
             }
          };
+         var heightParams = {
+            scrollHeight: 400,
+            clientHeight: 1000
+         };
          var baseControl = new lists.BaseControl(cfg);
          baseControl._children = triggers;
          baseControl.saveOptions(cfg);
@@ -1611,9 +1623,50 @@ define([
          assert.deepEqual({top: 0, bottom: 0}, baseControl._loadOffset);
          assert.isFalse(baseControl._isScrollShown);
 
-         lists.BaseControl._private.onScrollShow(baseControl);
+         lists.BaseControl._private.onScrollShow(baseControl, heightParams);
          assert.deepEqual({top: 100, bottom: 100}, baseControl._loadOffset);
          assert.isTrue(baseControl._isScrollShown);
+
+      });
+
+      it('needShowPagingByScrollSize', function() {
+         var cfg = {
+            navigation: {
+               view: 'infinity',
+               source: 'page',
+               viewConfig: {
+                  pagingMode: 'direct'
+               },
+               sourceConfig: {
+                  pageSize: 3,
+                  page: 0,
+                  hasMore: false
+               }
+            }
+         };
+         var heightParams = {
+            scrollHeight: 400,
+            clientHeight: 1000
+         };
+         var baseControl = new lists.BaseControl(cfg);
+         baseControl._sourceController = {
+            nav: false,
+            hasMoreData: function() {
+               return this.nav;
+            }
+         };
+
+         var res = lists.BaseControl._private.needShowPagingByScrollSize(baseControl, false);
+         assert.isFalse(res, 'Wrong paging state');
+
+         baseControl._sourceController.nav = true;
+         res = lists.BaseControl._private.needShowPagingByScrollSize(baseControl, false);
+         assert.isTrue(res, 'Wrong paging state');
+
+         //one time true - always true
+         baseControl._sourceController.nav = false;
+         res = lists.BaseControl._private.needShowPagingByScrollSize(baseControl, false);
+         assert.isTrue(res, 'Wrong paging state');
 
       });
 
@@ -1709,12 +1762,16 @@ define([
                }
             }
          };
+         var heightParams = {
+            scrollHeight: 400,
+            clientHeight: 1000
+         };
          var ctrl = new lists.BaseControl(cfg);
          ctrl.saveOptions(cfg);
          ctrl._beforeMount(cfg);
          ctrl._children = triggers;
          // эмулируем появление скролла
-         lists.BaseControl._private.onScrollShow(ctrl);
+         lists.BaseControl._private.onScrollShow(ctrl, heightParams);
 
          // скроллпэйджиг контроллер создается асинхронном
          setTimeout(function() {
@@ -1777,13 +1834,17 @@ define([
                }
             }
          };
+         var heightParams = {
+            scrollHeight: 400,
+            clientHeight: 1000
+         };
          var ctrl = new lists.BaseControl(cfg);
          ctrl.saveOptions(cfg);
          ctrl._beforeMount(cfg);
          ctrl._children = triggers;
 
          // эмулируем появление скролла
-         lists.BaseControl._private.onScrollShow(ctrl);
+         lists.BaseControl._private.onScrollShow(ctrl, heightParams);
 
          // скроллпэйджиг контроллер создается асинхронном
          setTimeout(function() {
@@ -1797,7 +1858,7 @@ define([
             ctrl.__onEmitScroll({}, 'listTop');
             ctrl.__onEmitScroll({}, 'listBottom');
             ctrl.__onEmitScroll({}, 'scrollMove', { scrollTop: 200 });
-            ctrl.__onEmitScroll({}, 'canScroll');
+            ctrl.__onEmitScroll({}, 'canScroll', { scrollHeight: 400, clientHeight: 1000 });
             ctrl.__onEmitScroll({}, 'cantScroll');
 
             ctrl.reload();
@@ -1999,6 +2060,72 @@ define([
          assert.isTrue(lists.BaseControl._private.hasItemActions(undefined, itemActionsProp));
          assert.isFalse(lists.BaseControl._private.hasItemActions(undefined, undefined));
       });
+
+      describe('updateItemActions', function() {
+         var source = new sourceLib.Memory({
+               keyProperty: 'id',
+               data: data
+            }),
+            cfg = {
+               viewName: 'Controls/List/ListView',
+               source: source,
+               keyProperty: 'id',
+               itemActions: [
+                  {
+                     id: 1,
+                     title: '123'
+                  }
+               ],
+               viewModelConstructor: lists.ListViewModel
+            },
+            baseControl = new lists.BaseControl(cfg);
+
+         baseControl.saveOptions(cfg);
+         baseControl._beforeMount(cfg);
+         var actionsUpdateCount = 0;
+         baseControl._children = {
+            itemActions: {
+               updateActions: function() {
+                  actionsUpdateCount++;
+               }
+            }
+         }
+         it('afterMount', function() {
+            baseControl._afterMount(cfg);
+            assert.equal(actionsUpdateCount, 1);
+         });
+         it('itemsChanged', async function() {
+            baseControl._itemsChanged = true;
+            await baseControl._beforeUpdate(cfg);
+            assert.equal(actionsUpdateCount, 2);
+         });
+         it('_onAfterEndEdit', function() {
+            baseControl._onAfterEndEdit({}, {});
+            assert.equal(actionsUpdateCount, 3);
+         });
+         it('update on recreating source', async function() {
+            let newSource = new sourceLib.Memory({
+               keyProperty: 'id',
+               data: data
+            });
+            let newCfg = {
+               viewName: 'Controls/List/ListView',
+               source: newSource,
+               keyProperty: 'id',
+               itemActions: [
+                  {
+                     id: 1,
+                     title: '123'
+                  }
+               ],
+               viewModelConstructor: lists.ListViewModel
+            };
+            await baseControl._beforeUpdate(newCfg);
+            assert.equal(actionsUpdateCount, 4);
+         });
+
+      });
+
       describe('resetScrollAfterReload', function() {
          var source = new sourceLib.Memory({
                keyProperty: 'id',
@@ -2087,111 +2214,6 @@ define([
 
       });
 
-      describe('_canUpdateItemsActions', function() {
-         var lnSource = new sourceLib.Memory({
-               keyProperty: 'id',
-               data: data
-            }),
-            lnCfg = {
-               viewName: 'Controls/List/ListView',
-               source: lnSource,
-               keyProperty: 'id',
-               itemActions: [
-                  {
-                     id: 1,
-                     title: '123'
-                  }
-               ],
-               viewModelConstructor: lists.ListViewModel
-            },
-            lnBaseControl = new lists.BaseControl(lnCfg);
-
-         lnBaseControl.saveOptions(lnCfg);
-         lnBaseControl._beforeMount(lnCfg);
-         lnBaseControl._context = {
-            isTouch: {
-               isTouch: false
-            }
-         };
-         it('afterMount', function() {
-            lnBaseControl._afterMount(lnCfg);
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._afterUpdate(lnCfg);
-            assert.isFalse(lnBaseControl._canUpdateItemsActions);
-         });
-         it('itemsChanged', async function() {
-            lnBaseControl._itemsChanged = true;
-            await lnBaseControl._beforeUpdate(lnCfg);
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-         });
-         it('_onAfterEndEdit', function() {
-            lnBaseControl._onAfterEndEdit({}, {});
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._afterUpdate(lnCfg);
-         });
-         it('hoveredItemChanged', function() {
-            lnBaseControl._onHoveredItemChanged({}, {});
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._afterUpdate(lnCfg);
-            assert.isFalse(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._context.isTouch.isTouch = true;
-            lnBaseControl._onHoveredItemChanged({}, {});
-            assert.isFalse(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._context.isTouch.isTouch = false;
-            lnBaseControl._afterUpdate(lnCfg);
-         });
-         it('locking by scroll', async function () {
-            lists.BaseControl._private.handleListScrollSync(lnBaseControl);
-            lnBaseControl._onHoveredItemChanged({}, {});
-            assert.isFalse(lnBaseControl._canUpdateItemsActions);
-            await setTimeout(function() {
-               lists.BaseControl._private.handleListScrollSync(lnBaseControl);
-               assert.isFalse(lnBaseControl._canUpdateItemsActions);
-               setTimeout(function() {
-                  assert.isFalse(lnBaseControl._canUpdateItemsActions);
-                  setTimeout(function() {
-                     assert.isTrue(lnBaseControl._canUpdateItemsActions);
-                  }, 100);
-               }, 100);
-            }, 100)
-            lnBaseControl._afterUpdate(lnCfg);
-         });
-         it('locking by DnD', function () {
-            lnBaseControl._listViewModel.getItemDataByItem = function() {};
-            lnBaseControl._listViewModel.setDragItemData = function() {};
-            lnBaseControl._itemDragData = {
-               dispItem: {}
-            };
-            lnBaseControl._dragStart({}, {});
-            lnBaseControl._onHoveredItemChanged({}, {});
-            assert.isFalse(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._dragEnd({}, {});
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._afterUpdate(lnCfg);
-         });
-         it('update on recreating source', async function() {
-            let newSource = new sourceLib.Memory({
-               keyProperty: 'id',
-               data: data
-            });
-            let newCfg = {
-                  viewName: 'Controls/List/ListView',
-                  source: newSource,
-                  keyProperty: 'id',
-                  itemActions: [
-                     {
-                        id: 1,
-                        title: '123'
-                     }
-                  ],
-                  viewModelConstructor: lists.ListViewModel
-               };
-            await lnBaseControl._beforeUpdate(newCfg);
-            assert.isTrue(lnBaseControl._canUpdateItemsActions);
-            lnBaseControl._afterUpdate(lnCfg);
-         });
-
-      });
 
       it('List navigation by keys and after reload', function(done) {
          // mock function working with DOM
