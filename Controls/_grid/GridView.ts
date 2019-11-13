@@ -23,7 +23,6 @@ import * as DefaultResultsTemplate from 'wml!Controls/_grid/ResultsTemplateResol
 import 'wml!Controls/_grid/layout/grid/Results';
 import 'wml!Controls/_grid/layout/partialGrid/Results';
 import 'wml!Controls/_grid/layout/table/Results';
-import 'css!theme?Controls/grid';
 
 var
     _private = {
@@ -256,7 +255,9 @@ var
                     this._listModel.setResultsPosition(newCfg.resultsPosition);
                 }
             }
-
+            if (this._options.theme !== newCfg.theme) {
+                this._listModel.setTheme(newCfg.theme);
+            }
             // todo removed by task https://online.sbis.ru/opendoc.html?guid=728d200e-ff93-4701-832c-93aad5600ced
             if (!GridIsEqualUtil.isEqualWithSkip(this._options.columns, newCfg.columns, { template: true, resultTemplate: true })) {
                 this._listModel.setColumns(newCfg.columns);
@@ -411,5 +412,6 @@ GridView.contextTypes = () => {
     };
 };
 
+GridView._theme = ['Controls/grid'];
 
 export = GridView;

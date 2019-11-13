@@ -14,6 +14,7 @@ import Prefetch from 'Controls/_filter/Prefetch';
 import {IPrefetchHistoryParams} from './IPrefetch';
 import mergeSource from 'Controls/_filter/Utils/mergeSource';
 import isEqualItems from 'Controls/_filter/Utils/isEqualItems';
+import {Model} from 'Types/entity';
 
 export interface IFilterHistoryData {
    items: object[];
@@ -22,6 +23,7 @@ export interface IFilterHistoryData {
 
 const getPropValue = Utils.object.getPropertyValue.bind(Utils);
 const setPropValue = Utils.object.setPropertyValue.bind(Utils);
+const ACTIVE_HISTORY_FILTER_INDEX = 0;
 
 const _private = {
          getItemsByOption(option, history) {
@@ -31,10 +33,9 @@ const _private = {
                if (typeof option === 'function') {
                   result = option(history);
                } else if (history) {
-                   mergeSource(option, history);
-                   result = option;
+                   result = mergeSource(_private.cloneItems(option), history);
                } else {
-                  result = option;
+                  result = _private.cloneItems(option);
                }
             }
 
@@ -77,12 +78,13 @@ const _private = {
             const isNeedSaveHistory = textValue !== undefined && textValue !== null;
             const visibility = !isNeedSaveHistory && getPropValue(item, 'visibility') ? false : getPropValue(item, 'visibility');
             const minimizedItem = {};
+            const value = getPropValue(item, 'value');
 
             if (visibility !== undefined) {
                 minimizedItem.visibility = visibility;
             }
 
-            if (isNeedSaveHistory) {
+            if (isNeedSaveHistory && value !== undefined) {
                 minimizedItem.value = getPropValue(item, 'value');
             }
 
@@ -129,7 +131,7 @@ const _private = {
                   .addCallback(function(res) {
                      recent = source.getRecent();
                      if (recent.getCount()) {
-                        lastFilter = recent.at(0);
+                        lastFilter = recent.at(ACTIVE_HISTORY_FILTER_INDEX);
                         result.callback(source.getDataObject(lastFilter.get('ObjectData')));
                      } else {
                         result.callback([]);
@@ -175,14 +177,15 @@ const _private = {
              let historyData;
 
              if (history && history.getCount()) {
-                 history.each((item) => {
+                 history.each((item, index) => {
                      if (!result) {
                          historyData = historySource.getDataObject(item.get('ObjectData'));
 
                          if (isEqual(_private.minimizeFilterItems(items), historyData.items || historyData)) {
                              result = {
                                  item,
-                                 data: historyData
+                                 data: historyData,
+                                 index
                              };
                          }
                      }
@@ -192,6 +195,10 @@ const _private = {
              return result;
          },
 
+        deleteFromHistory(item: Model, historyId: string): Promise {
+            return historyUtils.getHistorySource({historyId}).destroy(item.getId(), {$_history: true});
+        },
+
         processPrefetchOnItemsChanged(self, options): void {
             // Меняют фильтр с помощью кнопки фильтров,
             // но такой фильтр уже может быть сохранён в истории и по нему могут быть закэшированные данные,
@@ -199,29 +206,44 @@ const _private = {
             // если валидны, то просто добавляем идентификатор сессии в фильтр,
             // если данные не валидны, то такую запись из истории надо удалить
             const history = _private.getHistoryByItems(options.historyId, self._filterButtonItems);
+            let filter = self._filter;
+            let needDeleteFromHistory = false;
+            let needApplyPrefetch = false;
 
             if (history) {
                 const prefetchParams = Prefetch.getPrefetchFromHistory(history.data);
                 const needInvalidate = prefetchParams && Prefetch.needInvalidatePrefetch(history.data);
 
-                if (!prefetchParams || needInvalidate) {
-                    self._filter = Prefetch.clearPrefetchSession(self._filter);
+                if (history.index === ACTIVE_HISTORY_FILTER_INDEX || needInvalidate) {
+                    needDeleteFromHistory = true;
+                }
 
-                    if (needInvalidate) {
-                        historyUtils.getHistorySource({historyId: options.historyId})
-                                    .destroy(history.item.getId(), { $_history: true });
-                    }
-                } else {
-                    self._filter = Prefetch.applyPrefetchFromHistory(self._filter, history.data);
+                if (prefetchParams && !needInvalidate) {
+                    needApplyPrefetch = true;
                 }
             }
-            return self._filter;
+
+            if (needApplyPrefetch) {
+                filter = Prefetch.applyPrefetchFromHistory(self._filter, history.data);
+
+                if (!isEqual(filter, self._filter)) {
+                    needDeleteFromHistory = true;
+                }
+            } else {
+                filter = Prefetch.clearPrefetchSession(self._filter);
+            }
+
+            if (needDeleteFromHistory) {
+                _private.deleteFromHistory(history.item, options.historyId);
+            }
+
+            return self._filter = filter;
         },
 
         processHistoryOnItemsChanged(self, items, options): void {
             if (options.prefetchParams) {
                 _private.processPrefetchOnItemsChanged(self, options);
-                self._changedFilterItems = items;
+                self._isFilterChanged = true;
             } else if (options.historyId) {
                 _private.addToHistory(self, self._filterButtonItems, self._fastFilterItems, options.historyId);
             }
@@ -660,6 +682,10 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
          _filter: null,
          _filterButtonItems: null,
          _fastFilterItems: null,
+         /* Флаг необходим, т.к. добавлять запись в историю после изменения фильтра
+            необходимо только после загрузки данных, т.к. только в ответе списочного метода
+            можно получить идентификатор закэшированных данных для этого фильтра */
+         _isFilterChanged: null,
 
          constructor(): void {
             this._dataLoadCallback = this._dataLoadCallback.bind(this);
@@ -668,6 +694,14 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
 
         resetPrefetch(): void {
              const filter = clone(this._filter);
+             const historyId = this._options.historyId;
+             const history = _private.getHistoryByItems(historyId, this._filterButtonItems);
+
+             if (history) {
+                 _private.deleteFromHistory(history.item, historyId);
+             }
+
+             this._isFilterChanged = true;
              _private.setFilter(this, Prefetch.clearPrefetchSession(filter));
              _private.notifyFilterChanged(this);
         },
@@ -715,6 +749,10 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
                    this._fastFilterItems
                );
             }
+
+            if (newOptions.historyId !== this._options.historyId) {
+                this._sourceController = null;
+            }
          },
 
          _itemsChanged(event, items) {
@@ -736,7 +774,7 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
          },
 
          _dataLoadCallback(items: RecordSet): void {
-            if (this._options.historyId && this._changedFilterItems) {
+            if (this._options.historyId && this._isFilterChanged) {
 
                _private.addToHistory(
                    this,
@@ -752,7 +790,7 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
                Prefetch.applyPrefetchFromItems(this._filter, items);
             }
 
-            this._changedFilterItems = null;
+            this._isFilterChanged = false;
 
             if (this._options.dataLoadCallback) {
                this._options.dataLoadCallback(items);

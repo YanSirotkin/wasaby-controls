@@ -28,6 +28,7 @@ import {TouchContextField} from 'Controls/context';
 import IntertialScrolling from 'Controls/_list/resources/utils/InertialScrolling';
 import {debounce, throttle} from 'Types/function';
 import {CssClassList} from "../Utils/CssClassList";
+import {Memory} from 'Types/source';
 
 import {create as diCreate} from 'Types/di';
 
@@ -37,6 +38,14 @@ var
     defaultSelectedKeys = [],
     defaultExcludedKeys = [];
 
+const PAGE_SIZE_ARRAY = [{id: 1, title: '5', pageSize: 5},
+                         {id: 2, title: '10', pageSize: 10},
+                         {id: 3, title: '25', pageSize: 25},
+                         {id: 4, title: '50', pageSize: 50},
+                         {id: 5, title: '100', pageSize: 100},
+                         {id: 6, title: '200', pageSize: 200},
+                         {id: 7, title: '500', pageSize: 500},
+                         {id: 8, title: '1000', pageSize: 1000}];
 const
     HOT_KEYS = {
         moveMarkerToNext: constants.key.down,
@@ -142,8 +151,8 @@ var _private = {
                 }
                 if (self._pagingNavigation) {
                     var hasMoreDataDown = list.getMetaData().more;
-                    self._knownPagesCount = _private.calcPaging(self, hasMoreDataDown, cfg.navigation.sourceConfig.pageSize);
-                    self._pagingLabelData = _private.getPagingLabelData(hasMoreDataDown, cfg.navigation.sourceConfig.pageSize, self._currentPage);
+                    self._knownPagesCount = _private.calcPaging(self, hasMoreDataDown, self._currentPageSize);
+                    self._pagingLabelData = _private.getPagingLabelData(hasMoreDataDown, self._currentPageSize, self._currentPage);
                 }
                 var
                     isActive,
@@ -172,8 +181,10 @@ var _private = {
                         // instead of assigning items
                         // https://online.sbis.ru/opendoc.html?guid=ed57a662-7a73-4f11-b7d4-b09b622b328e
                         const modelCollection = listModel.getCollection();
+                        listModel.setCompatibleReset(true);
                         modelCollection.setMetaData(list.getMetaData());
                         modelCollection.assign(list);
+                        listModel.setCompatibleReset(false);
                         self._items = listModel.getCollection();
                     } else {
                         const curKey = listModel.getMarkedKey();
@@ -557,12 +568,13 @@ var _private = {
 
     updateShadowMode(self): void {
         const demandNavigation = self._options.navigation && self._options.navigation.view === 'demand';
+        const pagesNavigation = self._options.navigation && self._options.navigation.view === 'pages';
         self._notify('updateShadowMode', [{
             top: self._virtualScroll && self._virtualScroll.PlaceholdersSizes.top ||
-                !demandNavigation && self._listViewModel && self._listViewModel.getCount() &&
+                !demandNavigation && !pagesNavigation && self._listViewModel && self._listViewModel.getCount() &&
                 self._sourceController && self._sourceController.hasMoreData('up') ? 'visible' : 'auto',
             bottom: self._virtualScroll && self._virtualScroll.PlaceholdersSizes.bottom ||
-                !demandNavigation && self._listViewModel && self._listViewModel.getCount() &&
+                !demandNavigation && !pagesNavigation && self._listViewModel && self._listViewModel.getCount() &&
                 self._sourceController && self._sourceController.hasMoreData('down') ? 'visible' : 'auto'
         }], { bubbling: true });
     },
@@ -1461,7 +1473,7 @@ var _private = {
         if (typeof totalItemsCount === 'number') {
             pagingLabelData = {
                 totalItemsCount: totalItemsCount,
-                pageSize: pageSize,
+                pageSize: pageSize.toString(),
                 firstItemNumber: (currentPage - 1) * pageSize + 1,
                 lastItemNumber: Math.min(currentPage * pageSize, totalItemsCount)
             };
@@ -1485,8 +1497,13 @@ var _private = {
         }
     },
 
-    needBottomPadding: function(options, items) {
-        return (!!items && !!items.getCount() && options.itemActionsPosition === 'outside' && !options.footerTemplate && options.resultsPosition !== 'bottom');
+    needBottomPadding: function(options, items, listViewModel) {
+        return (!!items &&
+            (!!items.getCount() ||
+                (options.useNewModel ? listViewModel.isEditing() : !!listViewModel.getEditingItemData())) &&
+            options.itemActionsPosition === 'outside' &&
+            !options.footerTemplate &&
+            options.resultsPosition !== 'bottom');
     },
 
     isPagingNavigation: function(navigation) {
@@ -1494,6 +1511,7 @@ var _private = {
     },
     resetPagingNavigation: function(self, navigation) {
         self._knownPagesCount = INITIAL_PAGES_COUNT;
+        self._currentPageSize = navigation && navigation.sourceConfig && navigation.sourceConfig.pageSize || 1;
 
         //TODO: KINGO
         // нумерация страниц пейджинга начинается с 1, а не с 0 , поэтому текущая страница пейджига это страница навигации + 1
@@ -1532,14 +1550,19 @@ var _private = {
             self._virtualScrollTriggerVisibility = null;
             self._pagingVisible = false;
         }
-
-        if (!self._pagingNavigation) {
+        if (self._pagingNavigation) {
+            _private.resetPagingNavigation(self, cfg.navigation);
+            self._pageSizeSource = new Memory({
+                keyProperty: 'id',
+                data: PAGE_SIZE_ARRAY
+            })
+        } else {
             self._pagingNavigationVisible = false;
             _private.resetPagingNavigation(self, cfg.navigation);
         }
     },
     updateNavigation: function(self) {
-        self._pagingNavigationVisible = self._pagingNavigation && self._knownPagesCount > 1;
+        self._pagingNavigationVisible = self._pagingNavigation;
     },
     isBlockedForLoading(loadingIndicatorState): boolean {
         return loadingIndicatorState === 'all';
@@ -1558,13 +1581,13 @@ var _private = {
     hasItemActions: function(itemActions, itemActionsProperty) {
         return !!(itemActions || itemActionsProperty);
     },
-    setIndicatorContainerHeight(self, viewPortSize) {
-        const listBoundingRect = (self._container[0] || self._container).getBoundingClientRect();
+    setIndicatorContainerHeight(self, viewPortSize: number): void {
+        const listBoundingRect = ((self._container[0] || self._container) as HTMLElement).getBoundingClientRect();
 
         if (listBoundingRect.bottom < viewPortSize) {
             self._loadingIndicatorContainerHeight = listBoundingRect.height;
         } else {
-            self._loadingIndicatorContainerHeight = viewPortSize - listBoundingRect.top;
+            self._loadingIndicatorContainerHeight = viewPortSize;
         }
     },
 
@@ -1644,9 +1667,11 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
     //Variables for paging navigation
     _knownPagesCount: INITIAL_PAGES_COUNT,
     _currentPage: INITIAL_PAGES_COUNT,
+    _currentPageSize: null,
     _pagingNavigation: false,
     _pagingNavigationVisible: false,
     _pagingLabelData: null,
+    _pageSizeSource: null,
 
     _blockItemActionsByScroll: false,
 
@@ -1735,11 +1760,11 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
                     } else {
                         self._items = self._listViewModel.getItems();
                     }
-                    self._needBottomPadding = _private.needBottomPadding(newOptions, self._items);
+                    self._needBottomPadding = _private.needBottomPadding(newOptions, self._items, self._listViewModel);
                     if (self._pagingNavigation) {
                         var hasMoreData = self._items.getMetaData().more;
-                        self._knownPagesCount = _private.calcPaging(self, hasMoreData, newOptions.navigation.sourceConfig.pageSize);
-                        self._pagingLabelData = _private.getPagingLabelData(hasMoreData, newOptions.navigation.sourceConfig.pageSize, self._currentPage);
+                        self._knownPagesCount = _private.calcPaging(self, hasMoreData, self._currentPageSize);
+                        self._pagingLabelData = _private.getPagingLabelData(hasMoreData, self._currentPageSize, self._currentPage);
                     }
 
                     if (newOptions.serviceDataLoadCallback instanceof Function) {
@@ -1843,7 +1868,7 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         var recreateSource = newOptions.source !== this._options.source || navigationChanged || resetPaging;
         var sortingChanged = !isEqual(newOptions.sorting, this._options.sorting);
         var self = this;
-        this._needBottomPadding = _private.needBottomPadding(newOptions, this._items);
+        this._needBottomPadding = _private.needBottomPadding(newOptions, this._items, self._listViewModel);
         if (!isEqual(newOptions.navigation, this._options.navigation)) {
             _private.initializeNavigation(this, newOptions);
         }
@@ -1857,9 +1882,15 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
             )
         ) {
             this._viewModelConstructor = newOptions.viewModelConstructor;
+            const items = this._listViewModel.getItems();
+            this._listViewModel.destroy();
             this._listViewModel = new newOptions.viewModelConstructor(cMerge(cClone(newOptions), {
-                items: this._listViewModel.getItems()
+                items
             }));
+            if (this._virtualScroll) {
+                this._virtualScroll.ItemsCount = this._listViewModel.getCount();
+                this._virtualScroll.recalcByIndex(0);
+            }
             _private.initListViewModelHandler(this, this._listViewModel, newOptions.useNewModel);
         }
 
@@ -1894,7 +1925,7 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
 
             //Нужно обновлять опции записи не только при наведении мыши,
             //так как запись может поменяться в то время, как курсор находится на ней
-            this._updateItemActions();
+            this._shouldUpdateItemActions = true;
         }
 
         if (newOptions.multiSelectVisibility !== this._options.multiSelectVisibility) {
@@ -1919,7 +1950,7 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
 
         if (this._itemsChanged) {
             this._shouldNotifyOnDrawItems = true;
-            this._updateItemActions();
+            this._shouldUpdateItemActions = true;
         }
 
         if (this._loadedItems) {
@@ -2101,6 +2132,10 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         if (this._resetScrollAfterReload) {
             this._notify('doScroll', ['top'], { bubbling: true });
             this._resetScrollAfterReload = false;
+        }
+        if (this._shouldUpdateItemActions){
+            this._shouldUpdateItemActions = false;
+            this._updateItemActions();
         }
         if (this._shouldNotifyOnDrawItems) {
             this._notify('drawItems');
@@ -2286,14 +2321,12 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         }
     },
 
-    _showIndicator: function(event, direction) {
+    showIndicator(direction: 'down' | 'up' | 'all' = 'all'): void {
         _private.showIndicator(this, direction);
-        event.stopPropagation();
     },
 
-    _hideIndicator: function(event) {
+    hideIndicator(): void {
         _private.hideIndicator(this);
-        event.stopPropagation();
     },
 
     reload: function() {
@@ -2329,15 +2362,15 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         }
     },
 
-    _viewResize: function() {
+    _viewResize(): void {
         // todo Check, maybe remove "this._virtualScroll.ItemsContainer"?
         if (this._virtualScroll && this._virtualScroll.ItemsContainer) {
             this._virtualScroll.updateItemsSizes();
             _private.applyPlaceholdersSizes(this);
             _private.updateShadowMode(this);
         }
-        let viewSize = (this._container[0] || this._container).clientHeight;
-        this._viewSize = viewSize;
+        this._viewSize = (this._container[0] || this._container).clientHeight;
+        _private.setIndicatorContainerHeight(this, this._viewPortSize);
         if (this._needScrollCalculation) {
             this._updateLoadOffset(this._viewSize, this._viewPortSize);
         }
@@ -2386,9 +2419,9 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
         if (this._hasItemActions) {
             this._children.itemActions.updateActions();
         }
-    }
+    },
     _onAfterEndEdit: function(event, item, isAdd) {
-        this._updateItemActions();
+        this._shouldUpdateItemActions = true;
         return this._notify('afterEndEdit', [item, isAdd]);
     },
     _onAfterBeginEdit: function (event, item, isAdd) {
@@ -2569,14 +2602,25 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
 
     __pagingChangePage: function (event, page) {
         this._currentPage = page;
+        this._applyPagingNavigationState({page: this._currentPage});
+    },
+    _changePageSize: function(e, item) {
+        this._currentPageSize = item.get('pageSize');
+        this._applyPagingNavigationState({pageSize: this._currentPageSize});
+    },
+    _applyPagingNavigationState: function(params) {
         var newNavigation = cClone(this._options.navigation);
-        newNavigation.sourceConfig.page = page - 1;
+        if (params.pageSize) {
+            newNavigation.sourceConfig.pageSize = params.pageSize;
+        }
+        if (params.page) {
+            newNavigation.sourceConfig.page = params.page - 1;
+            newNavigation.sourceConfig.pageSize = this._currentPageSize;
+        }
         this._recreateSourceController(this._options.source, newNavigation, this._options.keyProperty);
-        var self = this;
-        _private.reload(self, self._options);
+        _private.reload(this, this._options);
         this._shouldRestoreScrollPosition = true;
     },
-
     _recreateSourceController: function(newSource, newNavigation, newKeyProperty) {
 
         if (this._sourceController) {
@@ -2636,7 +2680,8 @@ BaseControl.getDefaultOptions = function() {
         selectedKeys: defaultSelectedKeys,
         excludedKeys: defaultExcludedKeys,
         markedKey: null,
-        stickyHeader: true
+        stickyHeader: true,
+        selectionStrategy: 'Controls/operations:FlatSelectionStrategy'
     };
 };
 export = BaseControl;

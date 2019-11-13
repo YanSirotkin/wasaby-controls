@@ -2,7 +2,7 @@ define([
    'Core/core-merge',
    'Types/collection',
    'Controls/calendar',
-   'SBIS3.CONTROLS/Utils/DateUtil',
+   'Controls/Utils/Date',
    'ControlsUnit/Calendar/Utils',
    'Controls/_calendar/MonthList/ItemTypes',
    'wml!Controls/_calendar/MonthList/MonthTemplate',
@@ -47,6 +47,16 @@ define([
             assert.equal(ml._positionToScroll, position);
             assert.equal(ml._displayedPosition, position);
             assert.equal(ml._startPositionId, '2018-01-01');
+         });
+
+         it('should initialize _extDataLastVersion if source option passed', function() {
+            let
+               sandbox = sinon.createSandbox(),
+               control = calendarTestUtils.createComponent(
+               calendar.MonthList, coreMerge({ source: {} }, config, { preferSource: true }));
+            sandbox.stub(control, '_enrichItemsDebounced');
+            assert.strictEqual(control._extDataLastVersion, control._extData.getVersion());
+            sandbox.restore();
          });
       });
 
@@ -110,6 +120,36 @@ define([
             sandbox.restore();
          });
       });
+
+      describe('_afterUpdate', function() {
+         it('should notify \'enrichItems\' event if model has been changed', function() {
+            const
+               sandbox = sinon.createSandbox(),
+               component = calendarTestUtils.createComponent(
+                  calendar.MonthList, coreMerge({ source: {} }, config, { preferSource: true }));
+
+            sandbox.stub(component, '_notify');
+            sandbox.stub(component, '_enrichItemsDebounced');
+            component._extData._nextVersion();
+            component._afterUpdate();
+            sinon.assert.calledWith(component._notify, 'enrichItems');
+            sandbox.restore();
+         });
+
+         it('should\'t notify "enrichItems" event if model has\'t been changed', function() {
+            const
+               sandbox = sinon.createSandbox(),
+               component = calendarTestUtils.createComponent(
+                  calendar.MonthList, coreMerge({ source: {} }, config, { preferSource: true }));
+
+            sandbox.stub(component, '_notify');
+            sandbox.stub(component, '_enrichItemsDebounced');
+            component._afterUpdate();
+            sinon.assert.notCalled(component._notify);
+            sandbox.restore();
+         });
+      });
+
 
       describe('_afterRender, _drawItemsHandler', function() {
          [
@@ -236,13 +276,42 @@ define([
          }].forEach(function(test) {
             it(test.title, function() {
                const
+                  sandbox = sinon.createSandbox(),
                   component = calendarTestUtils.createComponent(
                      calendar.MonthList, coreMerge(test.options, config, { preferSource: true })
                   );
 
+               sandbox.stub(component, '_enrichItemsDebounced');
                component._displayedDates = test.displayedDates;
                component._intersectHandler(null, test.entries);
                assert.deepEqual(component._displayedDates, test.resultDisplayedDates);
+               sandbox.restore();
+            });
+         });
+      });
+
+      describe('_canScroll', function() {
+         [{
+            title: 'should scroll if viewMode === \'year\' and period is not the first month of the year',
+            options: { viewMode: 'year' },
+            date: new Date(2018, 3, 1),
+            result: true
+         }].forEach(function(test) {
+            it(test.title, function () {
+               let
+                  sandbox = sinon.createSandbox(),
+                  control = calendarTestUtils.createComponent(
+                     calendar.MonthList, coreMerge(test.options, config, { preferSource: true })),
+                  result;
+
+               sandbox.stub(control, '_findElementByDate').returns({});
+               result = control._canScroll(test.date);
+               if (test.result) {
+                  assert.isTrue(result);
+               } else {
+                  assert.isFalse(result);
+               }
+               sandbox.restore();
             });
          });
       });

@@ -149,6 +149,7 @@ define([
          // сорс грузит асинхронно
          setTimeout(function() {
             assert.equal(ctrl._items, ctrl.getViewModel().getItems());
+            const prevModel = ctrl._listViewModel;
             ctrl._beforeUpdate(cfg);
 
             // check saving loaded items after new viewModelConstructor
@@ -159,6 +160,7 @@ define([
             ctrl.saveOptions(cfg);
             assert.deepEqual(filter2, ctrl._options.filter, 'incorrect filter after updating');
             assert.equal(ctrl._viewModelConstructor, treeGrid.TreeViewModel);
+            assert.equal(prevModel._display, null);
             assert.isTrue(
                cInstance.instanceOfModule(ctrl._listViewModel, 'Controls/treeGrid:TreeViewModel') ||
                cInstance.instanceOfModule(ctrl._listViewModel, 'Controls/_treeGrid/Tree/TreeViewModel')
@@ -1423,6 +1425,10 @@ define([
            mockedControl._options.navigation.view = 'demand';
            lists.BaseControl._private.updateShadowMode(mockedControl);
            assert.deepEqual(updateShadowModeParams, { top: 'auto', bottom: 'auto' });
+
+           mockedControl._options.navigation.view = 'pages';
+           lists.BaseControl._private.updateShadowMode(mockedControl);
+           assert.deepEqual(updateShadowModeParams, { top: 'auto', bottom: 'auto' });
        });
 
        it ('call updateShadowMode in afterMount', function() {
@@ -2160,10 +2166,12 @@ define([
          it('itemsChanged', async function() {
             baseControl._itemsChanged = true;
             await baseControl._beforeUpdate(cfg);
+            baseControl._afterUpdate(cfg);
             assert.equal(actionsUpdateCount, 2);
          });
          it('_onAfterEndEdit', function() {
             baseControl._onAfterEndEdit({}, {});
+            baseControl._afterUpdate(cfg);
             assert.equal(actionsUpdateCount, 3);
          });
          it('update on recreating source', async function() {
@@ -2184,6 +2192,7 @@ define([
                viewModelConstructor: lists.ListViewModel
             };
             await baseControl._beforeUpdate(newCfg);
+            baseControl._afterUpdate(cfg);
             assert.equal(actionsUpdateCount, 4);
          });
 
@@ -2484,27 +2493,38 @@ define([
                return count;
             }
          };
+         const model = {
+            getEditingItemData: function() {
+               return null;
+            }
+         };
+         const editingModel = {
+            getEditingItemData: function() {
+               return {};
+            }
+         };
 
-         assert.isTrue(lists.BaseControl._private.needBottomPadding(cfg, items), "itemActionsPosinon is outside, padding is needed");
+         assert.isTrue(lists.BaseControl._private.needBottomPadding(cfg, items, model), "itemActionsPosinon is outside, padding is needed");
          cfg = {
             itemActionsPosition: 'inside'
          };
-         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items), "itemActionsPosinon is inside, padding is not needed");
+         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items, model), "itemActionsPosinon is inside, padding is not needed");
          cfg = {
             itemActionsPosition: 'outside',
             footerTemplate: "footer"
          };
-         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items), "itemActionsPosinon is outside, footer exists, padding is not needed");
+         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items, model), "itemActionsPosinon is outside, footer exists, padding is not needed");
          cfg = {
             itemActionsPosition: 'outside',
             resultsPosition: "bottom"
          };
-         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items), "itemActionsPosinon is outside, results row is in bottom padding is not needed");
+         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items, model), "itemActionsPosinon is outside, results row is in bottom padding is not needed");
          cfg = {
             itemActionsPosition: 'outside',
          };
          count = 0;
-         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items), "itemActionsPosinon is outside, empty items, padding is not needed");
+         assert.isFalse(lists.BaseControl._private.needBottomPadding(cfg, items, model), "itemActionsPosinon is outside, empty items, padding is not needed");
+         assert.isTrue(lists.BaseControl._private.needBottomPadding(cfg, items, editingModel), "itemActionsPosinon is outside, empty items, run editing in place padding is needed");
       });
       describe('EditInPlace', function() {
          it('beginEdit', function() {
@@ -4458,7 +4478,7 @@ define([
           };
 
           lists.BaseControl._private.setIndicatorContainerHeight(fakeBaseControl, 500);
-          assert.equal(fakeBaseControl._loadingIndicatorContainerHeight, 400)
+          assert.equal(fakeBaseControl._loadingIndicatorContainerHeight, 500);
        });
 
        it('setIndicatorContainerHeight: list smaller then scrollContainer', function () {
@@ -4792,7 +4812,7 @@ define([
                   totalItemsCount = 100;
                   assert.deepEqual({
                         totalItemsCount: 100,
-                        pageSize: 10,
+                        pageSize: '10',
                         firstItemNumber: 1,
                         lastItemNumber: 10,
                      },
@@ -4803,13 +4823,43 @@ define([
                   currentPage = 2;
                   assert.deepEqual({
                         totalItemsCount: 15,
-                        pageSize: 10,
+                        pageSize: '10',
                         firstItemNumber: 11,
                         lastItemNumber: 15,
                      },
                      getPagingLabelData(totalItemsCount, pageSize, currentPage)
                   );
                });
+            });
+            it('changePageSize', async function() {
+               let cfg = {
+                  viewModelConstructor: lists.ListViewModel,
+                  navigation: {
+                     view: 'pages',
+                     source: 'page',
+                     viewConfig: {
+                        pagingMode: 'direct'
+                     },
+                     sourceConfig: {
+                        pageSize: 5,
+                        page: 0,
+                        hasMore: false
+                     }
+                  }
+               };
+               let baseControl = new lists.BaseControl(cfg);
+               let expectedSourceConfig = {};
+               baseControl.saveOptions(cfg);
+               await baseControl._beforeMount(cfg);
+               baseControl._recreateSourceController = function(newSource, newNavigation) {
+                  assert.deepEqual(expectedSourceConfig, newNavigation.sourceConfig);
+               };
+               expectedSourceConfig.page = 0;
+               expectedSourceConfig.pageSize = 100;
+               expectedSourceConfig.hasMore = false;
+               baseControl._changePageSize({}, {id: 1, title: 100, get: function() {return this.title;}});
+               expectedSourceConfig.page = 1;
+               baseControl.__pagingChangePage({}, 2);
             });
          });
          describe('navigation switch', function() {
@@ -4900,10 +4950,10 @@ define([
          it('resetPagingNavigation', function() {
             let instance = {};
             lists.BaseControl._private.resetPagingNavigation(instance);
-            assert.deepEqual(instance, {_currentPage: 1, _knownPagesCount: 1});
+            assert.deepEqual(instance, {_currentPage: 1, _knownPagesCount: 1, _currentPageSize: 1});
 
-            lists.BaseControl._private.resetPagingNavigation(instance, {sourceConfig: {page:1}});
-            assert.deepEqual(instance, {_currentPage: 2, _knownPagesCount: 1});
+            lists.BaseControl._private.resetPagingNavigation(instance, {sourceConfig: {page:1, pageSize: 5}});
+            assert.deepEqual(instance, {_currentPage: 2, _knownPagesCount: 1, _currentPageSize: 5});
 
          });
       });
