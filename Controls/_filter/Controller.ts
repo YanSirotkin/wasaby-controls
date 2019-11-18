@@ -79,12 +79,15 @@ const _private = {
             const visibility = !isNeedSaveHistory && getPropValue(item, 'visibility') ? false : getPropValue(item, 'visibility');
             const minimizedItem = {};
             const value = getPropValue(item, 'value');
+            const isNeedSaveValue = getPropValue(item, 'resetValue') !== undefined ?
+                value !== undefined && isNeedSaveHistory :
+                true;
 
             if (visibility !== undefined) {
                 minimizedItem.visibility = visibility;
             }
 
-            if (isNeedSaveHistory && value !== undefined) {
+            if (isNeedSaveValue) {
                 minimizedItem.value = getPropValue(item, 'value');
             }
 
@@ -175,18 +178,25 @@ const _private = {
 
              let result;
              let historyData;
+             let minimizedItemFromHistory;
+             let minimizedItemFromOption;
 
              if (history && history.getCount()) {
                  history.each((item, index) => {
                      if (!result) {
                          historyData = historySource.getDataObject(item.get('ObjectData'));
 
-                         if (isEqual(_private.minimizeFilterItems(items), historyData.items || historyData)) {
-                             result = {
-                                 item,
-                                 data: historyData,
-                                 index
-                             };
+                         if (historyData) {
+                             minimizedItemFromOption = _private.minimizeFilterItems(items);
+                             minimizedItemFromHistory = _private.minimizeFilterItems(historyData.items || historyData);
+
+                             if (isEqual(minimizedItemFromOption, minimizedItemFromHistory)) {
+                                 result = {
+                                     item,
+                                     data: historyData,
+                                     index
+                                 };
+                             }
                          }
                      }
                  });
@@ -432,8 +442,11 @@ const _private = {
                calculatedFilter = _private.calculateFilterByItems(cfg.filter, tmpStorage._filterButtonItems, tmpStorage._fastFilterItems);
 
                if (cfg.prefetchParams && cfg.historyId) {
-                   tmpStorage._filter = calculatedFilter;
-                   calculatedFilter = _private.processPrefetchOnItemsChanged(tmpStorage, cfg);
+                   const history = _private.getHistoryByItems(cfg.historyId, tmpStorage._filterButtonItems);
+
+                   if (history) {
+                       calculatedFilter = Prefetch.applyPrefetchFromHistory(calculatedFilter, history.data);
+                   }
                    calculatedFilter = Prefetch.prepareFilter(calculatedFilter, cfg.prefetchParams);
                }
             } catch (err) {
@@ -720,7 +733,7 @@ const Container = Control.extend(/** @lends Controls/_filter/Container.prototype
                 return _private.resolveItems(this, options.historyId, options.filterButtonSource, options.fastFilterSource, options.historyItems).addCallback((history) => {
                     _private.itemsReady(this, filter, history);
 
-                    if (options.historyItems && options.historyId && options.prefetchParams) {
+                    if (options.historyItems && options.historyItems.length && options.historyId && options.prefetchParams) {
                         _private.processHistoryOnItemsChanged(this, options.historyItems, options);
                     }
                     return history;

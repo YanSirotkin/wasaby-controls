@@ -149,6 +149,7 @@ var _private = {
     },
 
     loadMore: function(self, dispItem) {
+        self._children.baseControl.showIndicator();
         var
             filter = cClone(self._options.filter),
             listViewModel = self._children.baseControl.getViewModel(),
@@ -164,6 +165,7 @@ var _private = {
             if (self._options.task1177940587 && self._options.dataLoadCallback) {
                 self._options.dataLoadCallback(list);
             }
+            self._children.baseControl.hideIndicator();
         });
     },
     onNodeRemoved: function(self, nodeId) {
@@ -299,8 +301,9 @@ var _private = {
 
         filter[self._options.parentProperty] = nodes.concat(_private.getReloadableNodes(viewModel, key, keyProperty, nodeProperty));
 
-        return _private.createSourceController(self._options.source, self._options.navigation).load(filter).addCallback(function(result) {
+        return _private.createSourceControllerForNode(self, key, self._options.source, self._options.navigation).load(filter).addCallback(function(result) {
             _private.applyReloadedNodes(viewModel, key, keyProperty, nodeProperty, result);
+            viewModel.setHasMoreStorage(_private.prepareHasMoreStorage(self._nodesSourceControllers));
             return result;
         });
     },

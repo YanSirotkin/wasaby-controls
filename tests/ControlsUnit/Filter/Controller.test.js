@@ -1,4 +1,4 @@
-define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Controls/_filter/HistoryUtils', 'Env/Env'], function(Filter, Deferred, entity, HistoryUtils, Env) {
+define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Controls/_filter/HistoryUtils', 'Env/Env', 'Types/collection'], function(Filter, Deferred, entity, HistoryUtils, Env, collection) {
 
    describe('Controls.Filter.Controller', function () {
 
@@ -36,9 +36,13 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
                assert.isFalse(historyUpdated);
 
                filterLayout._beforeMount({ filterButtonSource: items, fastFilterSource: fastItems, historyId: 'TEST_HISTORY_ID', historyItems: [], prefetchParams: {}}).addCallback((res) => {
-                  assert.isTrue(historyUpdated);
-                  sandbox.restore();
-                  resolve();
+                  assert.isFalse(historyUpdated);
+
+                  filterLayout._beforeMount({ filterButtonSource: items, fastFilterSource: fastItems, historyId: 'TEST_HISTORY_ID', historyItems: ['testHistoryItem'], prefetchParams: {}}).addCallback(() => {
+                     assert.isTrue(historyUpdated);
+                     sandbox.restore();
+                     resolve();
+                  });
                   return res;
                });
                return items;
@@ -831,11 +835,26 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
          filterButtonItem = {
             name: 'testId4',
             value: 'testValue4',
+            resetValue: 'testValue4',
             visibility: true,
             viewMode: 'basic'
          };
          expectedMinItem = {
             name: 'testId4',
+            visibility: false,
+            viewMode: 'basic'
+         };
+         assert.deepStrictEqual(Filter._private.minimizeItem(filterButtonItem), expectedMinItem);
+
+         filterButtonItem = {
+            name: 'testId4',
+            value: 'testValue4',
+            visibility: true,
+            viewMode: 'basic'
+         };
+         expectedMinItem = {
+            name: 'testId4',
+            value: 'testValue4',
             visibility: false,
             viewMode: 'basic'
          };
@@ -892,8 +911,32 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
 
       });
 
+      it('getHistoryByItems', function() {
+         const sandbox = sinon.createSandbox();
+         const historyItems = new collection.List({
+            items: [
+               new entity.Model()
+            ]
+         });
+         const filterItems = [{id: 'testId', value: 'testValue', resetValue: 'testResetValue', textValue: '', anyField2: 'anyValue2'}];
+         let dataObject = null;
+         sandbox.replace(HistoryUtils, 'getHistorySource', () => {
+            return {
+               getItems: () => historyItems,
+               getDataObject: () => dataObject
+            };
+         });
+         assert.isUndefined(Filter._private.getHistoryByItems('testId', filterItems));
+
+         dataObject = [{
+            id: 'testId', value: 'testValue', resetValue: 'testResetValue', textValue: '', anyField1: 'anyValue1'
+         }];
+         assert.equal(Filter._private.getHistoryByItems('testId', filterItems).index, 0);
+         sandbox.restore();
+      });
+
       it('getCalculatedFilter', function() {
-         this.skip();
+         const sandbox = sinon.createSandbox();
          let filterButtonItems = [{id: 'testId', value: 'testValue', resetValue: 'testResetValue', textValue: ''}];
          let historyItems = [{id: 'testId', value: 'testValueFromHistory', textValue: 'testTextValueFromHistory'}];
          let prefetchParams = {
@@ -901,10 +944,21 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
          };
          let resultFilter = {
             testId: 'testValueFromHistory',
-            prefetchMethod: 'testMethod'
+            prefetchMethod: 'testMethod',
+            PrefetchSessionId: 'testId'
          };
 
-         return new Promise(function(resolve) {
+         return new Promise(function(resolve, reject) {
+            sandbox.replace(Filter._private, 'getHistoryByItems', () => {
+               return {
+                  data: {
+                     items: [],
+                     prefetchParams: {
+                        PrefetchSessionId: 'testId'
+                     }
+                  }
+               };
+            });
             Filter.getCalculatedFilter({
                filterButtonSource: filterButtonItems,
                historyItems: historyItems,
@@ -916,7 +970,10 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
                assert.equal(result.filterButtonItems[0].value, 'testValueFromHistory');
                assert.equal(result.filterButtonItems[0].textValue, 'testTextValueFromHistory');
                assert.deepEqual(result.filter, resultFilter);
+               sandbox.restore();
                resolve();
+            }).addErrback(function(error) {
+               reject(error);
             });
          });
       });

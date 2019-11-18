@@ -33,6 +33,7 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @public
  * @author Золотова Э.Е.
  * @demo Controls-demo/FilterView/ItemTemplates/Index
+ * @see https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/
  */
 
 /*
@@ -47,6 +48,7 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @control
  * @public
  * @author Золотова Э.Е.
+ * @see https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/
  */
 
 var _private = {
@@ -123,10 +125,10 @@ var _private = {
         return popupItems;
     },
 
-    getFolderIds: function(items, nodeProperty, keyProperty) {
+    getFolderIds: function({items, nodeProperty, parentProperty, keyProperty}) {
         let folders = [];
         factory(items).each((item) => {
-            if (item.get(nodeProperty)) {
+            if (item.get(nodeProperty) && !item.get(parentProperty)) {
                 folders.push(item.get(keyProperty));
             }
         });
@@ -326,7 +328,7 @@ var _private = {
 
         let getHierarchySelectedKeys = () => {
             // selectedKeys - { folderId1: [selected keys for folder] , folderId2: [selected keys for folder], ... }
-            let folderIds = _private.getFolderIds(config.items, config.nodeProperty, config.keyProperty);
+            let folderIds = _private.getFolderIds(config);
             factory(folderIds).each((folderId, index) => {
                 selectedKeys[folderId] = [];
                 factory(items).each((item) => {
@@ -377,7 +379,7 @@ var _private = {
     },
 
     prepareHierarchySelection: function(selectedKeys, curConfig, resetValue) {
-        let folderIds = _private.getFolderIds(curConfig.items, curConfig.nodeProperty, curConfig.keyProperty);
+        let folderIds = _private.getFolderIds(curConfig);
         let isEmptySelection = true;
         let onlyFoldersSelected = true;
 
@@ -465,7 +467,7 @@ var _private = {
     },
 
     updateHierarchyHistory: function(currentFilter, selectedItems, source) {
-        let folderIds = _private.getFolderIds(currentFilter.items, currentFilter.nodeProperty, currentFilter.keyProperty);
+        let folderIds = _private.getFolderIds(currentFilter);
 
         let getNodeItems = (parentKey) => {
             let nodeItems = [];

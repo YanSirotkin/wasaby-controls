@@ -12,6 +12,7 @@
  * @includes IFilterView Controls/_filter/View/interface/IFilterView
  * @includes IPrefetch Controls/_filter/IPrefetch
  * @includes Prefetch Controls/_filter/Prefetch
+ * @includes DateRangeEditor Controls/_filter/Editors/DateRange
  * @public
  * @author Крайнов Д.О.
  */
@@ -29,6 +30,7 @@
  * @includes IFilterView Controls/_filter/View/interface/IFilterView
  * @includes IPrefetch Controls/_filter/IPrefetch
  * @includes Prefetch Controls/_filter/Prefetch
+ * @includes DateRangeEditor Controls/_filter/Editors/DateRange
  * @public
  * @author Крайнов Д.О.
  */
@@ -40,6 +42,7 @@ import ViewItemTemplate = require('wml!Controls/_filter/View/ItemTemplate');
 import FastContainer = require('Controls/_filter/Fast/Container');
 import Controller = require('Controls/_filter/Controller');
 import HistoryUtils = require('Controls/_filter/HistoryUtils');
+import FilterUtils = require('Controls/_filter/resetFilterUtils');
 
 export {default as ButtonContainer} from './_filter/Button/Container';
 export {default as ViewContainer} from './_filter/View/Container';
@@ -53,5 +56,6 @@ export {
    ViewItemTemplate,
    FastContainer,
    Controller,
-   HistoryUtils
+   HistoryUtils,
+   FilterUtils
 };
