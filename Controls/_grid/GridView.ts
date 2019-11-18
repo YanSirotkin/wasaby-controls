@@ -1,6 +1,6 @@
 import {TemplateFunction} from 'UI/Base';
 import {ListView} from 'Controls/list';
-import {IoC, detection} from 'Env/Env';
+import {detection} from 'Env/Env';
 import * as GridLayoutUtil from 'Controls/_grid/utils/GridLayoutUtil';
 import * as GridIsEqualUtil from 'Controls/_grid/utils/GridIsEqualUtil';
 import {TouchContextField as isTouch} from "Controls/context";
@@ -23,16 +23,17 @@ import * as DefaultResultsTemplate from 'wml!Controls/_grid/ResultsTemplateResol
 import 'wml!Controls/_grid/layout/grid/Results';
 import 'wml!Controls/_grid/layout/partialGrid/Results';
 import 'wml!Controls/_grid/layout/table/Results';
+import {Logger} from 'UI/Utils';
 
 var
     _private = {
-        checkDeprecated: function(cfg) {
+        checkDeprecated: function(cfg, self) {
             // TODO: https://online.sbis.ru/opendoc.html?guid=837b45bc-b1f0-4bd2-96de-faedf56bc2f6
             if (cfg.showRowSeparator !== undefined) {
-                IoC.resolve('ILogger').warn('IGridControl', 'Option "showRowSeparator" is deprecated and removed in 19.200. Use option "rowSeparatorVisibility".');
+                Logger.warn('IGridControl: Option "showRowSeparator" is deprecated and removed in 19.200. Use option "rowSeparatorVisibility".', self);
             }
             if (cfg.stickyColumn !== undefined) {
-                IoC.resolve('ILogger').warn('IGridControl', 'Option "stickyColumn" is deprecated and removed in 19.200. Use "stickyProperty" option in the column configuration when setting up the columns.');
+                Logger.warn('IGridControl: Option "stickyColumn" is deprecated and removed in 19.200. Use "stickyProperty" option in the column configuration when setting up the columns.', self);
             }
         },
 
@@ -227,7 +228,7 @@ var
         _notifyHandler: tmplNotify,
 
         _beforeMount: function(cfg) {
-            _private.checkDeprecated(cfg);
+            _private.checkDeprecated(cfg, this);
             _private.setGridSupportStatus(this);
             this._gridTemplate = _private.chooseGridTemplate(this._isFullGridSupport, this._shouldUseTableLayout);
             const resultSuper = GridView.superclass._beforeMount.apply(this, arguments);
@@ -309,6 +310,25 @@ var
                 this._listModel.setHoveredItem(itemData.item);
             }
             GridView.superclass._onItemMouseEnter.apply(this, arguments);
+        },
+
+        getHeaderHeight(): number {
+            // TODO: Удалить проверку после полного перехода на table-layout.
+            //  По задаче https://online.sbis.ru/doc/5d2c482e-2b2f-417b-98d2-8364c454e635
+            if (this._isPartialGridSupport && !this._shouldUseTableLayout) {
+                return 0;
+            }
+            const hasHeader = !!this._options.header && !!this._options.header.length;
+            return hasHeader ? this._children.header.getBoundingClientRect().height : 0;
+        },
+
+        getResultsHeight(): number {
+            // TODO: Удалить проверку после полного перехода на table-layout.
+            //  По задаче https://online.sbis.ru/doc/5d2c482e-2b2f-417b-98d2-8364c454e635
+            if (this._isPartialGridSupport && !this._shouldUseTableLayout) {
+                return 0;
+            }
+            return this._options.resultsPosition === 'top' ? this._children.results.getBoundingClientRect().height : 0;
         },
 
         _onItemMouseLeave: function (event, itemData) {

@@ -43,6 +43,13 @@ export default class TileRender extends BaseRender {
         this._notify('register', ['scroll', this, this._resetHoverState], { bubbling: true });
     }
 
+    protected _beforeUpdate(newOptions: ITileRenderOptions): void {
+        super._beforeUpdate(newOptions);
+        if (newOptions.listModel !== this._options.listModel) {
+            this._animatedItem = null;
+        }
+    }
+
     protected _afterUpdate(): void {
         super._afterUpdate();
         if (this._animatedItem) {
@@ -51,6 +58,7 @@ export default class TileRender extends BaseRender {
             } else if (this._animatedItem.isFixed() && !this._animatedItem.isAnimated()) {
                 this._animatedItem.setAnimated(true);
                 this._animatedItem.setFixedPositionStyle(this._animatedItemTargetPosition);
+                this._animatedItem.setCanShowActions(true);
                 this._animatedItem = null;
             }
         }
@@ -140,6 +148,7 @@ export default class TileRender extends BaseRender {
                 this._animatedItemTargetPosition = targetPositionStyle;
             } else {
                 item.setFixedPositionStyle(targetPositionStyle);
+                item.setCanShowActions(true);
             }
         }
     }

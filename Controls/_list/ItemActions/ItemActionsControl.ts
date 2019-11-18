@@ -7,6 +7,7 @@ import getStyle = require('Controls/_list/ItemActions/Utils/getStyle');
 import ArraySimpleValuesUtil = require('Controls/Utils/ArraySimpleValuesUtil');
 import { relation } from 'Types/entity';
 import { RecordSet } from 'Types/collection';
+import { constants } from 'Env/Env';
 import 'css!theme?Controls/list';
 import { CollectionItem } from 'Controls/display';
 
@@ -14,6 +15,10 @@ import * as itemActionsTemplate from 'wml!Controls/_list/ItemActions/resources/I
 
 const ACTION_ICON_CLASS = 'controls-itemActionsV__action_icon  icon-size';
 const ACTION_TYPE = 'itemActionsUpdated';
+const POSITION_CLASSES = {
+    bottomRight: 'controls-itemActionsV_position_bottomRight',
+    topRight: 'controls-itemActionsV_position_topRight'
+}
 
 var _private = {
     fillItemAllActions: function(item, options) {
@@ -36,6 +41,9 @@ var _private = {
     },
 
     updateItemActions: function(self, item, options) {
+        if (constants.isNodePlatform && !ItemActionsControl._isUnitTesting) {
+            return;
+        }
         // TODO Remove this, compatibility between management controls
         if (options.useNewModel && !item.getContents) {
             item = options.listModel.getItemBySourceId(item.get(options.listModel.getKeyProperty()));
@@ -70,6 +78,9 @@ var _private = {
     },
 
     updateActions: function(self, options, collectionChanged: boolean = false): void {
+        if (constants.isNodePlatform && !ItemActionsControl._isUnitTesting) {
+            return;
+        }
         if (options.itemActionsProperty || options.itemActions) {
             if (options.useNewModel) {
                 options.listModel.setEventRaising(false, true);
@@ -128,13 +139,23 @@ var _private = {
        });
 
        return children;
-   }
+    },
+    getContainerPaddingClass(classes: string, itemPadding: object):string {
+       let paddingClass = ' ';
+       if (classes.indexOf(POSITION_CLASSES.topRight) !== -1) {
+           paddingClass += 'controls-itemActionsV_padding-top_' + (itemPadding && itemPadding.top === 'null' ? 'null ' : 'default ');
+       } else  if (classes.indexOf(POSITION_CLASSES.bottomRight) !== -1) {
+           paddingClass += 'controls-itemActionsV_padding-bottom_' + (itemPadding && itemPadding.bottom === 'null' ? 'null ' : 'default ');
+       }
+       return paddingClass;
+    }
 };
 
 var ItemActionsControl = Control.extend({
 
     _template: template,
     _itemActionsTemplate: itemActionsTemplate,
+    _getContainerPaddingClass: null,
 
     constructor: function() {
         ItemActionsControl.superclass.constructor.apply(this, arguments);
@@ -150,6 +171,7 @@ var ItemActionsControl = Control.extend({
             this.serverSide = true;
             return;
         }
+        this._getContainerPaddingClass = _private.getContainerPaddingClass.bind(this);
         if (newOptions.useNewModel) {
             return import('Controls/listRender').then((listRender) => {
                 this._itemActionsTemplate = listRender.itemActionsTemplate;
@@ -225,5 +247,6 @@ ItemActionsControl.getDefaultOptions = function() {
     };
 };
 ItemActionsControl._private = _private;
+ItemActionsControl._isUnitTesting = false;
 
 export = ItemActionsControl;
