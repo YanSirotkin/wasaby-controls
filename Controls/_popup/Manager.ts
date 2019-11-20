@@ -525,6 +525,10 @@ const Manager = Control.extend({
      * @param controller popup controller
      */
     show(options, controller): string {
+        if (this.find(options.id)) {
+            this.update(options.id, options);
+            return options.id;
+        }
         const item = this._createItemConfig(options, controller);
         const defaultConfigResult = controller.getDefaultConfig(item);
         _private.addElement(item);
@@ -548,7 +552,7 @@ const Manager = Control.extend({
     },
 
     _createItemConfig(options, controller) {
-        const popupId = randomId('popup-');
+        const popupId = options.id || randomId('popup-');
         const popupConfig = {
             id: popupId,
             modal: options.modal,
@@ -603,7 +607,10 @@ const Manager = Control.extend({
             const isResizingLine = event.target.classList.contains('controls-ResizingLine');
             _private.popupItems.each((item) => {
                 // if we have deactivated popup
-                if (item && (item.waitDeactivated || isResizingLine)) {
+                // Отказываюсь на старых страницах от закрытия окон по деактивации, сам отслеживаю необходимость закрытия
+                // в 20.1000 по работе в план разделю закрытие по клику мимо и по деактивации на 2 разные опции,
+                // из этой проверки нужно удалить item.waitDeactivated и isNewEnvironment()
+                if (item && (item.waitDeactivated || isResizingLine || !_private.isNewEnvironment())) {
                     const parentControls = goUpByControlTree(event.target);
                     const popupInstance = ManagerController.getContainer().getPopupById(item.id);
 

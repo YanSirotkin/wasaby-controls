@@ -884,6 +884,29 @@ define([
            ], baseControl._virtualScroll._itemsHeights);
        });
 
+      it('_private::handleListScrollSync', () => {
+         const self = {};
+
+         self._virtualScroll = {
+            PlaceholdersSizes: {
+               top: 1000,
+               bottom: 1000
+            }
+         };
+
+         lists.BaseControl._private.handleListScrollSync(self, {
+            scrollTop: 2000,
+            scrollHeight: 4000,
+            clientHeight: 1000
+         });
+
+         assert.deepEqual(self._scrollParams, {
+            scrollTop: 3000,
+            scrollHeight: 6000,
+            clientHeight: 1000
+         });
+      });
+
       it('moveMarker activates the control', async function() {
          const
             cfg = {
@@ -1147,6 +1170,11 @@ define([
          sandbox.replace(lists.BaseControl._private, 'moveMarkerToNext', () => {});
          lists.BaseControl._private.toggleSelection(baseControl, event);
          assert.deepEqual([1], baseControl._listViewModel._selectedKeys);
+
+         baseControl.getViewModel()._markedKey = 5;
+         lists.BaseControl._private.toggleSelection(baseControl, event);
+         assert.deepEqual([1, 1], baseControl._listViewModel._selectedKeys);
+
 
          sandbox.restore();
       });
@@ -2232,8 +2260,15 @@ define([
             baseControl._afterUpdate(cfg);
             assert.equal(actionsUpdateCount, 4);
          });
+         it('control in error state, should not call update', function() {
+            baseControl.__error = true;
+            baseControl._updateItemActions();
+            assert.equal(actionsUpdateCount, 4);
+            baseControl.__error = false;
+         });
          it('without listViewModel should not call update', function() {
             baseControl._listViewModel = null;
+            baseControl._updateItemActions();
             assert.equal(actionsUpdateCount, 4);
          });
       });
@@ -4392,7 +4427,8 @@ define([
                },
                viewModelConstructor: lists.ListViewModel,
                keyProperty: 'id',
-               source: source
+               source: source,
+               virtualScrolling: true
             },
             instance = new lists.BaseControl(cfg);
          instance.saveOptions(cfg);
