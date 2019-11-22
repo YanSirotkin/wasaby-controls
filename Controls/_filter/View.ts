@@ -33,7 +33,10 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @public
  * @author Золотова Э.Е.
  * @demo Controls-demo/FilterView/ItemTemplates/Index
- * @see https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/
+ * 
+ * @see Controls/filterPopup:SimplePanel
+ * @see Controls/filterPopup:DetailPanel
+ * @see Controls/filter:FastContainer
  */
 
 /*
@@ -48,7 +51,9 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @control
  * @public
  * @author Золотова Э.Е.
- * @see https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/
+ * @see Controls/filterPopup:SimplePanel
+ * @see Controls/filterPopup:DetailPanel
+ * @see Controls/filter:FastContainer
  */
 
 var _private = {
@@ -117,7 +122,7 @@ var _private = {
                         _private.loadItemsFromSource(configs[item.name], item.editorOptions.source, popupItem.filter).addCallback(() => {
                             if (isHistorySource(item.editorOptions.source)) {
                                 popupItem.items = item.editorOptions.source.prepareItems(popupItem.items);
-                                configs[item.name].items = popupItem.items.clone();
+                                configs[item.name].popupItems = popupItem.items.clone();
                             }
                         });
                     }
