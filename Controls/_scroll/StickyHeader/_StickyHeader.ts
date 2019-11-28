@@ -53,17 +53,17 @@ var _private = {
 
    _isSafari13: function(): boolean {
       // TODO remove after complete https://online.sbis.ru/opendoc.html?guid=14d98228-de34-4ad3-92a3-4d7fe8770097
-      if (!Env.detection.safari) {
-         return false;
+      if (Env.detection.safari) {
+         const safariVersionMatching = Env.detection.userAgent.match(/Version\/([0-9\.]*)/);
+         if (safariVersionMatching) {
+            return parseInt(safariVersionMatching[1], 10) >= 13;
+         }
       }
-
-      const safariVersionMatching = Env.detection.userAgent.match(/Version\/([0-9\.]*)/);
-
-      if (safariVersionMatching) {
-         return parseInt(safariVersionMatching[1], 10) >= 13;
-      } else {
-          return false;
+      // Check chrome ang safari on ios 13.
+      if (Env.detection.isMobileIOS && Env.detection.IOSVersion >= 13) {
+         return true;
       }
+      return false;
    }
 };
 
@@ -155,6 +155,7 @@ var StickyHeader = Control.extend({
       //Let the listeners know that the element is no longer fixed before the unmount.
       this._fixationStateChangeHandler('', this._model.fixedPosition);
       this._observeHandler = undefined;
+      this._observer = undefined;
       this._notify('stickyRegister', [{ id: this._index }, false], { bubbling: true });
    },
 
