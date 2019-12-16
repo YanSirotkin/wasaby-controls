@@ -2,14 +2,16 @@
  * Библиотека контролов, которые предназначены для преобразования данных к какому-либо внешнему виду.
  * @library Controls/decorator
  * @includes Highlight Controls/_decorator/Highlight
+ * @includes IHighlightOptions Controls/_decorator/Highlight/IHighlightOptions
  * @includes Markup Controls/_decorator/Markup
  * @includes Money Controls/_decorator/Money
+ * @includes IMoneyOptions Controls/_decorator/Money/IMoneyOptions
  * @includes Number Controls/_decorator/Number
  * @includes INumberOptions Controls/_decorator/Number/INumberOptions
  * @includes Phone Controls/_decorator/Phone
- * @includes IPhoneOptions Controls/_decorator/Phone/IPhoneOptions
+ * @includes IPhoneOptions Controls/_decorator/Phone
  * @includes WrapURLs Controls/_decorator/WrapURLs
- * @includes IWrapURLsOptions Controls/_decorator/WrapURLs/IWrapURLsOptions
+ * @includes IWrapURLsOptions Controls/_decorator/WrapURLs
  * @includes Converter Controls/_decorator/Markup/Converter
  * @includes InnerText Controls/_decorator/Markup/resolvers/innerText
  * @includes _highlightResolver Controls/_decorator/Markup/resolvers/highlight
@@ -28,7 +30,9 @@
  * @includes Money Controls/_decorator/Money
  * @includes Number Controls/_decorator/Number
  * @includes Phone Controls/_decorator/Phone
+ * @includes IPhoneOptions Controls/_decorator/Phone
  * @includes WrapURLs Controls/_decorator/WrapURLs
+ * @includes IWrapURLsOptions Controls/_decorator/WrapURLs
  * @includes Converter Controls/_decorator/Markup/Converter
  * @includes InnerText Controls/_decorator/Markup/resolvers/innerText
  * @includes _highlightResolver Controls/_decorator/Markup/resolvers/highlight

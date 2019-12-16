@@ -122,6 +122,9 @@ let getData = (crudResult: CrudResult): Promise<any> => {
 };
 
 var _private = {
+    isNewModelItemsChange: (action, newItems) => {
+        return action && (action !== 'ch' || newItems && !newItems.properties);
+    },
     checkDeprecated: function(cfg) {
         if (cfg.historyIdCollapsedGroups) {
             Logger.warn('IGrouped: Option "historyIdCollapsedGroups" is deprecated and removed in 19.200. Use option "groupHistoryId".');
@@ -944,7 +947,7 @@ var _private = {
     onListChange: function(self, event, changesType, action, newItems, newItemsIndex, removedItems) {
         // TODO Понять, какое ускорение мы получим, если будем лучше фильтровать
         // изменения по changesType в новой модели
-        const newModelChanged = self._options.useNewModel && action && action !== 'ch';
+        const newModelChanged = self._options.useNewModel && _private.isNewModelItemsChange(action, newItems);
         if (changesType === 'collectionChanged' || newModelChanged) {
             //TODO костыль https://online.sbis.ru/opendoc.html?guid=b56324ff-b11f-47f7-a2dc-90fe8e371835
             if (self._options.navigation && self._options.navigation.source) {
@@ -1448,7 +1451,6 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
     _isScrollShown: false,
     _needScrollCalculation: false,
     _loadTriggerVisibility: null,
-    _loadOffset: null,
     _loadOffsetTop: LOAD_TRIGGER_OFFSET,
     _loadOffsetBottom: LOAD_TRIGGER_OFFSET,
     _loadingIndicatorContainerOffsetTop: 0,
@@ -2119,7 +2121,11 @@ var BaseControl = Control.extend(/** @lends Controls/_list/BaseControl.prototype
     },
 
     _commitEditActionHandler: function() {
-        this._children.editInPlace.commitAndMoveNextRow();
+        if (this._options.task1178374430) {
+            this._children.editInPlace.commitAndMoveNextRow();
+        } else {
+            this._children.editInPlace.commitEdit();
+        }
     },
 
     _cancelEditActionHandler: function() {
