@@ -12,15 +12,13 @@ import defaultItemTemplate = require('wml!Controls/_toggle/RadioGroup/resources/
     * @extends Core/Control
     * @mixes Controls/_interface/ISource
     * @mixes Controls/_interface/ISingleSelectable
+    * @mixes Controls/_interface/IValidationStatus
     * @implements Controls/_toggle/interface/IToggleGroup
     * @control
     * @public
     * @author Красильников А.С.
     * @category Toggle
     * @demo Controls-demo/RadioGroup/RadioGroupDemoPG
-    *
-    * @mixes Controls/_toggle/resources/SwitchCircle/SwitchCircleStyles
-    * @mixes Controls/_toggle/RadioGroup/RadioGroupStyles
     */
 
    /*
@@ -38,9 +36,6 @@ import defaultItemTemplate = require('wml!Controls/_toggle/RadioGroup/resources/
     * @author Красильников А.С.
     * @category Toggle
     * @demo Controls-demo/RadioGroup/RadioGroupDemoPG
-    *
-    * @mixes Controls/_toggle/resources/SwitchCircle/SwitchCircleStyles
-    * @mixes Controls/_toggle/RadioGroup/RadioGroupStyles
     */
 
    var _private = {
@@ -88,7 +83,8 @@ import defaultItemTemplate = require('wml!Controls/_toggle/RadioGroup/resources/
 
    Radio.getDefaultOptions = function getDefaultOptions() {
       return {
-         direction: 'vertical'
+         direction: 'vertical',
+         validationStatus: 'valid'
       };
    };
 

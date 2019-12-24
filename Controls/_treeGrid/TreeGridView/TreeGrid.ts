@@ -5,7 +5,7 @@ import TreeGridView = require('Controls/_treeGrid/TreeGridView/TreeGridView');
 import TreeControl = require('Controls/_treeGrid/TreeControl');
 
 
-   /**
+/**
     * Иерархический список с пользовательским шаблоном элемента. Может загружать данные из источника данных.
     * <a href="/materials/demo-ws4-edit-in-place">Демо-пример</a>.
     *
@@ -15,8 +15,8 @@ import TreeControl = require('Controls/_treeGrid/TreeControl');
     * @mixes Controls/interface/IItemTemplate
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IGroupedGrid
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/IHierarchy
@@ -56,8 +56,8 @@ import TreeControl = require('Controls/_treeGrid/TreeControl');
     * @mixes Controls/interface/IItemTemplate
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IGroupedGrid
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/ISorting

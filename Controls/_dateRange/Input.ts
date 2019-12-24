@@ -4,9 +4,10 @@ import coreMerge = require('Core/core-merge');
 import CalendarControlsUtils from './Utils';
 import DateRangeModel from './DateRangeModel';
 import {StringValueConverter} from 'Controls/input';
-import IDateTimeMask from './interfaces/IDateTimeMask';
+import {IDateTimeMask} from 'Controls/input';
 import tmplNotify = require('Controls/Utils/tmplNotify');
 import template = require('wml!Controls/_dateRange/Input/Input');
+import getOptions from 'Controls/Utils/datePopupUtils';
 
 /**
  * Поле ввода периода дат.
@@ -56,7 +57,7 @@ import template = require('wml!Controls/_dateRange/Input/Input');
  * @demo Controls-demo/Input/Date/RangePG
  * @category Input
  * @author Красильников А.С.
- */ 
+ */
 
 var Component = Control.extend([], {
     _template: template,
@@ -83,39 +84,21 @@ var Component = Control.extend([], {
 
     _openDialog: function (event) {
         var cfg = {
-            opener: this,
+            ...getOptions.getCommonOptions(this),
             target: this._container,
             template: 'Controls/datePopup',
             className: 'controls-PeriodDialog__picker',
-            horizontalAlign: { side: 'right' },
-            targetPoint: { horizontal: 'left' },
-            fittingMode: 'overflow',
-            eventHandlers: {
-               onResult: this._onResult.bind(this)
-            },
             templateOptions: {
-               startValue: this._rangeModel.startValue,
-               endValue: this._rangeModel.endValue,
-               mask: this._options.mask,
+               ...getOptions.getTemplateOptions(this),
                selectionType: this._options.selectionType,
                quantum: this._options.quantum,
                headerType: 'input',
                closeButtonEnabled: true,
                rangeselect: true,
-               dateConstructor: this._options.dateConstructor,
-               readOnly: this._options.readOnly
+               range: this._options.range
             }
         };
-        if (!this._isVdomDialog()) {
-            cfg.template = 'SBIS3.CONTROLS/Date/RangeBigChoose';
-            cfg.isCompoundTemplate = true;
-            cfg.templateOptions.handlers = { onChoose: this._onResultWS3.bind(this) };
-        }
         this._children.opener.open(cfg);
-    },
-
-    _isVdomDialog: function() {
-        return this._options.vdomDialog;
     },
 
     _onResultWS3: function (event, startValue, endValue) {
@@ -123,8 +106,7 @@ var Component = Control.extend([], {
     },
 
     _onResult: function (startValue, endValue) {
-        this._rangeModel.startValue = startValue;
-        this._rangeModel.endValue = endValue;
+        this._rangeModel.setRange(startValue, endValue);
         this._children.opener.close();
         this._notifyInputCompleted();
     },
@@ -167,9 +149,7 @@ var Component = Control.extend([], {
 });
 
 Component.getDefaultOptions = function () {
-    return coreMerge({
-        vdomDialog: true
-    }, IDateTimeMask.getDefaultOptions());
+    return IDateTimeMask.getDefaultOptions();
 };
 
 Component.getOptionTypes = function () {

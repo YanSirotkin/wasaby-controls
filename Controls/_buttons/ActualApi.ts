@@ -1,4 +1,4 @@
-import { IoC } from 'Env/Env';
+import {Logger} from 'UI/Utils';
 
 const deprecatedClassesOfButton = {
    iconButtonBordered: {
@@ -83,16 +83,16 @@ const ActualApi = {
          buttonAdd: false
       };
       if (deprecatedClassesOfButton.hasOwnProperty(style)) {
-         IoC.resolve('ILogger').warn('Button', 'Используются устаревшие стили (style = ' + style + ')');
+          Logger.warn('Button: Используются устаревшие стили (style = ' + style + ')');
          currentButtonClass.viewMode = deprecatedClassesOfButton[style].type;
          currentButtonClass.style = deprecatedClassesOfButton[style].style;
          if (style === 'linkMain2' || style === 'linkMain3') {
-            IoC.resolve('ILogger').warn('Button', 'Используются устаревшие стили. Используйте компонент Controls/Label c опцией underline: hovered и fixed');
+             Logger.warn('Button: Используются устаревшие стили. Используйте компонент Controls/Label c опцией underline: hovered и fixed');
          } else if (style === 'buttonAdd') {
             currentButtonClass.buttonAdd = true;
-            IoC.resolve('ILogger').warn('Button', 'Используются устаревшие стили. Используйте опцию iconStyle в различных значениях для изменения по наведению');
+             Logger.warn('Button: Используются устаревшие стили. Используйте опцию iconStyle в различных значениях для изменения по наведению');
          } else {
-            IoC.resolve('ILogger').warn('Button', 'Используются устаревшие стили. Используйте опции: viewMode = ' + currentButtonClass.viewMode + ', style = ' + currentButtonClass.style);
+             Logger.warn('Button: Используются устаревшие стили. Используйте опции: viewMode = ' + currentButtonClass.viewMode + ', style = ' + currentButtonClass.style);
          }
       }
       return currentButtonClass;
@@ -109,19 +109,19 @@ const ActualApi = {
          case 'attention':
             newIconStyle = 'warning';
             if (warnFlag) {
-               IoC.resolve('ILogger').warn('Button', 'Используется устаревшее значение опции iconStyle. Используйте значение warning вместо attention');
+                Logger.warn('Button: Используется устаревшее значение опции iconStyle. Используйте значение warning вместо attention');
             }
             break;
          case 'done':
             newIconStyle = 'success';
             if (warnFlag) {
-               IoC.resolve('ILogger').warn('Button', 'Используется устаревшее значение опции iconStyle. Используйте значение success виесто done');
+                Logger.warn('Button: Используется устаревшее значение опции iconStyle. Используйте значение success виесто done');
             }
             break;
          case 'error':
             newIconStyle = 'danger';
             if (warnFlag) {
-               IoC.resolve('ILogger').warn('Button', 'Используется устаревшее значение опции iconStyle. Используйте значение danger вместо error');
+                Logger.warn('Button: Используется устаревшее значение опции iconStyle. Используйте значение danger вместо error');
             }
             break;
          default:
@@ -204,11 +204,11 @@ const ActualApi = {
          }
       }
    },
-   iconSize(options: unknown): string {
-      if (options.iconSize) {
-         return options.iconSize;
+   iconSize(iconSize: string, icon: string): string {
+      if (iconSize) {
+         return iconSize;
       } else {
-         if (_iconRegExp.exec(options.icon)) {
+         if (_iconRegExp.exec(icon)) {
             switch (RegExp.$1) {
                case '16': return 's';
                case '24': return 'm';
@@ -223,16 +223,16 @@ const ActualApi = {
          }
       }
    },
-   iconStyle(options: unknown): string {
-      if (options.readOnly) {
+   iconStyle(iconStyle: string, icon: string, readonly: boolean, buttonAdd: boolean): string {
+      if (readonly) {
          return 'readonly';
-      } else if (options.buttonAdd) {
+      } else if (buttonAdd) {
          return 'default';
       } else {
-         if (options.iconStyle) {
-            return this.iconStyleTransformation(options.iconStyle, true);
+         if (iconStyle) {
+            return this.iconStyleTransformation(iconStyle, true);
          } else {
-            return this.iconStyleTransformation(this.iconColorFromOptIconToIconStyle(options.icon));
+            return this.iconStyleTransformation(this.iconColorFromOptIconToIconStyle(icon));
          }
       }
    },
@@ -278,7 +278,7 @@ const ActualApi = {
       if (resViewMode === 'transparentQuickButton' || resViewMode === 'quickButton') {
          resContrast = resViewMode !== 'transparentQuickButton';
          resViewMode = 'toolButton';
-         IoC.resolve('ILogger').warn('Button', 'В кнопке используется viewMode = quickButton, transparentQuickButton используйте значение опции viewMode toolButton и опцию transparent');
+         Logger.warn('Button: В кнопке используется viewMode = quickButton, transparentQuickButton используйте значение опции viewMode toolButton и опцию transparent');
       }
 
       return {
@@ -300,7 +300,7 @@ const ActualApi = {
                default: height = 'default';
             }
             return height;
-         } else if (viewMode === 'toolButton') {
+         } else if (viewMode === 'toolButton' || viewMode === 'pushButton') {
             switch (optionSize) {
                case 's': height = 'default'; break;
                case 'm': height = 'l'; break;

@@ -1,9 +1,10 @@
+import rk = require('i18n!Controls');
 import {SyntheticEvent} from 'Vdom/Vdom';
 import BaseControl = require('Core/Control');
 import coreMerge = require('Core/core-merge');
 import {descriptor, Date as WSDate} from 'Types/entity';
 import {dateMaskConstants} from 'Controls/interface';
-import IRangeSelectable from './_datePopup/IRangeSelectable';
+import {IRangeSelectable} from 'Controls/dateRange';
 import {DateRangeModel, IDateRangeSelectable} from 'Controls/dateRange';
 import EventProxyMixin from './_datePopup/Mixin/EventProxy';
 import MonthsRange from './_datePopup/MonthsRange';

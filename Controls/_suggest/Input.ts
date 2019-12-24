@@ -1,7 +1,7 @@
 import Control = require('Core/Control');
 import template = require('wml!Controls/_suggest/Input/Input');
-import {descriptor} from 'Types/entity';
 import tmplNotify = require('Controls/Utils/tmplNotify');
+import {getOptionTypes} from 'Controls/_suggest/Utils';
 import 'css!theme?Controls/suggest';
 
 /**
@@ -16,8 +16,8 @@ import 'css!theme?Controls/suggest';
  * @mixes Controls/_suggest/ISuggest
  * @mixes Controls/interface/ISearch
  * @mixes Controls/_interface/ISource
- * @mixes Controls/interface/IFilter
- * @mixes Controls/interface/INavigation
+ * @mixes Controls/_interface/IFilter
+ * @mixes Controls/_interface/INavigation
  * @mixes CControls/_input/interface/IBase
  * @mixes Controls/_input/interface/IText
  * @mixes Controls/_suggest/Input/Styles
@@ -38,8 +38,8 @@ import 'css!theme?Controls/suggest';
  * @mixes Controls/_suggest/ISuggest
  * @mixes Controls/interface/ISearch
  * @mixes Controls/_interface/ISource
- * @mixes Controls/interface/IFilter
- * @mixes Controls/interface/INavigation
+ * @mixes Controls/_interface/IFilter
+ * @mixes Controls/_interface/INavigation
  * @mixes Controls/_input/interface/IBase
  * @mixes Controls/_input/interface/IText
  * @mixes Controls/_suggest/Input/Styles
@@ -122,14 +122,7 @@ var Suggest = Control.extend({
 
 // <editor-fold desc="OptionsDesc">
 
-Suggest.getOptionTypes = function() {
-   return {
-      displayProperty: descriptor(String).required(),
-      suggestTemplate: descriptor(Object).required(),
-      searchParam: descriptor(String).required()
-   };
-};
-
+Suggest.getOptionTypes = getOptionTypes;
 Suggest.getDefaultOptions = function() {
    return {
       minSearchLength: 3

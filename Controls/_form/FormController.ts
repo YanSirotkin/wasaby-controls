@@ -1,8 +1,9 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
 import cInstance = require('Core/core-instance');
 import tmpl = require('wml!Controls/_form/FormController/FormController');
 import Deferred = require('Core/Deferred');
-import Env = require('Env/Env');
+import {Logger} from 'UI/Utils';
 import dataSource = require('Controls/dataSource');
 
 
@@ -175,16 +176,16 @@ import dataSource = require('Controls/dataSource');
       _beforeMount: function(cfg, _, receivedState) {
          this._source = cfg.source || cfg.dataSource;
          if (cfg.dataSource) {
-            Env.IoC.resolve('ILogger').warn('FormController', 'Use option "source" instead of "dataSource"');
+             Logger.warn('FormController: Use option "source" instead of "dataSource"', this);
          }
          if (cfg.initValues) {
-            Env.IoC.resolve('ILogger').warn('FormController', 'Use option "createMetaData" instead of "initValues"');
+             Logger.warn('FormController: Use option "createMetaData" instead of "initValues"', this);
          }
          if (cfg.destroyMeta) {
-            Env.IoC.resolve('ILogger').warn('FormController', 'Use option "destroyMetaData " instead of "destroyMeta"');
+             Logger.warn('FormController: Use option "destroyMetaData " instead of "destroyMeta"', this);
          }
          if (cfg.idProperty) {
-            Env.IoC.resolve('ILogger').warn('FormController', 'Use option "keyProperty " instead of "idProperty"');
+             Logger.warn('FormController: Use option "keyProperty " instead of "idProperty"', this);
          }
 
          receivedState = receivedState || {};
@@ -297,8 +298,8 @@ import dataSource = require('Controls/dataSource');
       },
       _getRecordId: function() {
          if (!this._record.getId && !this._options.idProperty && !this._options.keyProperty) {
-            Env.IoC.resolve('ILogger').error('FormController', 'Рекорд не является моделью и не задана опция idProperty, указывающая на ключевое поле рекорда');
-            return null;
+             Logger.error('FormController: Рекорд не является моделью и не задана опция idProperty, указывающая на ключевое поле рекорда', this);
+             return null;
          }
          var keyProperty = this._options.idProperty || this._options.keyProperty;
          return keyProperty ? this._record.get(keyProperty) : this._record.getId();
@@ -362,7 +363,7 @@ import dataSource = require('Controls/dataSource');
          if (forceFinishValue !== undefined) {
             this._confirmDialogResult(forceFinishValue, def);
          } else {
-            this._showConfirmPopup('yesnocancel', rk('Чтобы продолжить редактирование, нажмите "Отмена".')).then((answer) => {
+            this._showConfirmPopup('yesnocancel', rk('Чтобы продолжить редактирование, нажмите \'Отмена\'')).then((answer) => {
                this._confirmDialogResult(answer, def);
                return answer;
             });
@@ -427,6 +428,7 @@ import dataSource = require('Controls/dataSource');
                updateResult.dependOn(res);
             } else {
                updateResult.callback(true);
+               self._updateIsNewRecord(false);
             }
          }
 

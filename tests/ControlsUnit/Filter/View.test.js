@@ -5,7 +5,8 @@ define(
       'Types/source',
       'Types/collection',
       'Controls/history',
-      'Core/Deferred'
+      'Core/Deferred',
+      'Core/nativeExtensions'
    ],
    function(filter, Clone, sourceLib, collection, history, Deferred) {
       describe('Filter:View', function() {
@@ -171,11 +172,15 @@ define(
 
                newConfig = Clone(defaultConfig);
                newConfig.source[0].viewMode = 'basic';
-               newConfig.source[1].viewMode = 'basic';
+               newConfig.source[2].viewMode = 'frequent';
+               newConfig.source[2].editorOptions.source = new sourceLib.Memory({
+                  keyProperty: 'id',
+                  data: defaultItems[0]
+               });
 
                //isNeedReload = true
                view._beforeUpdate(newConfig).addCallback(function() {
-                  assert.equal(Object.keys(view._configs).length, 0);
+                  assert.equal(Object.keys(view._configs).length, 2);
                   done();
                });
             });
@@ -232,7 +237,7 @@ define(
 
             newItems[0].viewMode = 'basic';
             result = filter.View._private.isNeedReload(oldItems, newItems);
-            assert.isTrue(result);
+            assert.isFalse(result);
 
             newItems[2].viewMode = 'frequent';
             result = filter.View._private.isNeedReload(oldItems, newItems);
@@ -306,9 +311,8 @@ define(
             source[0].viewMode = 'basic';
             source[1].viewMode = 'basic';
 
-            assert.isTrue(view._needShowFastFilter(defaultSource, 'test'));
-            assert.isFalse(view._needShowFastFilter(source, 'test'));
-            assert.isFalse(view._needShowFastFilter(defaultSource, null));
+            assert.isTrue(view._needShowFastFilter(defaultSource));
+            assert.isFalse(view._needShowFastFilter(source));
          });
 
          it('_open', function() {
@@ -464,13 +468,18 @@ define(
             };
             view._source = source;
             view._dateRangeItem = dateItem;
-            view._rangeChangedHandler('rangeChanged', new Date(2019, 6, 1), new Date(2019, 6, 31));
-            assert.deepStrictEqual(filter.View._private.getDateRangeItem(view._source).value, [new Date(2019, 6, 1), new Date(2019, 6, 31)]);
-            assert.deepStrictEqual(filter.View._private.getDateRangeItem(view._source).textValue, "Июль'19");
-            assert.deepStrictEqual(newFilter, {
-               date: [new Date(2019, 6, 1), new Date(2019, 6, 31)],
-               author: 'Ivanov K.K.',
-               state: [1]});
+            return new Promise(function(resolve) {
+               view._rangeChangedHandler('rangeChanged', new Date(2019, 6, 1), new Date(2019, 6, 31)).addCallback(function () {
+                  assert.deepStrictEqual(filter.View._private.getDateRangeItem(view._source).value, [new Date(2019, 6, 1), new Date(2019, 6, 31)]);
+                  assert.deepStrictEqual(filter.View._private.getDateRangeItem(view._source).textValue, "Июль'19");
+                  assert.deepStrictEqual(newFilter, {
+                     date: [new Date(2019, 6, 1), new Date(2019, 6, 31)],
+                     author: 'Ivanov K.K.',
+                     state: [1]
+                  });
+                  resolve();
+               })
+            })
          });
 
          it('_private:getDateRangeItem', () => {
@@ -547,12 +556,29 @@ define(
             assert.isFalse(!!keys.length);
          });
 
-         it('_private:prepareItems', function() {
+         it('_private:resolveItems', function() {
             let date = new Date();
             date.setSQLSerializationMode(Date.SQL_SERIALIZE_MODE_TIME);
             let self = {};
-            filter.View._private.prepareItems(self, date);
-            assert.strictEqual(self._source.getSQLSerializationMode(), date.getSQLSerializationMode());
+            filter.View._private.resolveItems(self, [date]);
+            assert.strictEqual(self._source[0].getSQLSerializationMode(), date.getSQLSerializationMode());
+         });
+
+         it('_private:resolveItems check _hasResetValues', function() {
+            let self = {};
+            let items = [
+               {name: '1', value: '', resetValue: null},
+               {name: '2', value: '', resetValue: undefined}
+            ];
+            filter.View._private.resolveItems(self, items);
+            assert.isTrue(self._hasResetValues);
+
+            items = [
+               {name: '1', value: ''},
+               {name: '2', value: ''}
+            ];
+            filter.View._private.resolveItems(self, items);
+            assert.isFalse(self._hasResetValues);
          });
 
          it('_private:getFolderIds', function() {

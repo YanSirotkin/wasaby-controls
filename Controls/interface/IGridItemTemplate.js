@@ -1,11 +1,13 @@
+/* eslint-disable */
 define('Controls/interface/IGridItemTemplate', [
 ], function() {
 
    /**
-    * Интерфейс для настройки отображения табличного представления.
+    * Интерфейс для настройки отображения элементов в контроле {@link Controls/grid:View Таблица}.
     *
     * @interface Controls/interface/IGridItemTemplate
     * @public
+    * @author Авраменко А.С.
     */
 
    /*
@@ -13,36 +15,32 @@ define('Controls/interface/IGridItemTemplate', [
     *
     * @interface Controls/interface/IGridItemTemplate
     * @public
+    * @author Авраменко А.С.
     */
 
    /**
     * @name Controls/interface/IGridItemTemplate#itemTemplate
-    * @cfg {Function} Шаблон отображения элемента таблицы.
-    * <a href="/materials/demo-ws4-grid-item-template">Example</a>.
+    * @cfg {String|Function} Устанавливает шаблон отображения элемента.
+    * @default Controls/grid:ItemTemplate
     * @remark
-    * Для контрола {@link Controls/grid:View} в качестве базового шаблона применяется "Controls/grid:ItemTemplate".
-    * В его области видимости доступен объект itemData, через который можно получить доступ к данным рендеринга (например, элемент, ключ и т.д.).
-    * Базовый шаблон itemTemplate поддерживает следующие параметры:
-    * <ul>
-    *    <li>highlightOnHover {Boolean} — включить выделение элемента при наведении курсора.</li>
-    *    <li>
-    *       clickable {Boolean} - Тип курсора (default или pointer).
-    *       <ul>
-    *          <li>true - курсор pointer</li>
-    *          <li>false - курсор default</li>
-    *       </ul>
-    *       По умолчанию: <b>true</b>
-    *    </li>
-    * </ul>
+    * См. <a href="/materials/demo-ws4-grid-item-template">демо-пример</a>.
+    * Подробнее о работе с шаблоном читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/grid/templates/item/ здесь}.
+    * Шаблон может быть переопределён с помощью {@link Controls/interface/IGridItemTemplate#itemTemplateProperty itemTemplateProperty}.
     * @example
-    * Использование пользовательского шаблона для рендеринга:
-    * <pre>
-    *    <Controls.grid:View>
-    *       <ws:itemTemplate>
-    *          <ws:partial template="Controls/grid:ItemTemplate" highlightOnHover="{{false}}"/>
-    *       </ws:itemTemplate>
-    *    </Controls.grid:View>
+    * В следующем примере показано, как изменить параметры шаблона.
+    * <pre class="brush: html">
+    * <Controls.grid:View>
+    *    <ws:itemTemplate>
+    *       <ws:partial template="Controls/grid:ItemTemplate" marker="{{false}}">
+    *          <ws:contentTemplate>
+    *             {{contentTemplate.itemData.item.title}}
+    *          </ws:contentTemplate>
+    *       </ws:partial>
+    *    </ws:itemTemplate>
+    * </Controls.grid:View>
     * </pre>
+    * @see Controls/interface/IGridItemTemplate#itemTemplateProperty
+    * @see Controls/grid:ItemTemplate
     */
 
    /*
@@ -77,8 +75,11 @@ define('Controls/interface/IGridItemTemplate', [
 
    /**
     * @name Controls/interface/IGridItemTemplate#itemTemplateProperty
-    * @cfg {String} Имя свойства элемента, содержащего шаблон для рендеринга. Если не задано, используется itemTemplate.
-    * <a href="/materials/demo-ws4-grid-item-template">Example</a>.
+    * @cfg {String|undefined} Устанавливает имя поля элемента, где содержится имя шаблона. С помощью этой настройки отдельным элементам можно задать собственный шаблон отображения.
+    * @remark
+    * См. <a href="/materials/demo-ws4-grid-item-template">демо-пример</a>.
+    * Если не задано значение в опции itemTemplateProperty или в свойстве элемента, то используется шаблон из {@link Controls/interface/IGridItemTemplate#itemTemplate itemTemplate}.
+    * @see Controls/interface/IGridItemTemplate#itemTemplate
     */
 
    /*

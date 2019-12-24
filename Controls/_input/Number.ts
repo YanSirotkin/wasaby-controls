@@ -1,4 +1,4 @@
-import Env = require('Env/Env');
+import {Logger} from 'UI/Utils';
 import Base = require('Controls/_input/Base');
 import entity = require('Types/entity');
 import ViewModel = require('Controls/_input/Number/ViewModel');
@@ -16,12 +16,7 @@ import ViewModel = require('Controls/_input/Number/ViewModel');
  * @mixes Controls/_interface/INumberFormat
  *
  * @public
- * @demo Controls-demo/Input/SizesAndHeights/Index
- * @demo Controls-demo/Input/FontStyles/Index
- * @demo Controls-demo/Input/TextAlignments/Index
- * @demo Controls-demo/Input/TagStyles/Index
- * @demo Controls-demo/Input/ValidationStatuses/Index
- * @demo Controls-demo/Input/SelectOnClick/Index
+ * @demo Controls-demo/Input/Number/Base/Index
  *
  * @author Красильников А.С.
  */
@@ -39,7 +34,7 @@ import ViewModel = require('Controls/_input/Number/ViewModel');
  * @mixes Controls/_input/interface/INumberLength
  *
  * @public
- * @demo Controls-demo/Input/Number/NumberPG
+ * @demo Controls-demo/Input/Number/Base/Index
  *
  * @author Красильников А.С.
  */
@@ -47,7 +42,7 @@ import ViewModel = require('Controls/_input/Number/ViewModel');
 var _private = {
     validateOptions: function (options) {
         if (options.integersLength <= 0) {
-            Env.IoC.resolve('ILogger').error('Number', 'Incorrect integers length: ' + options.integersLength + '. Integers length must be greater than 0.');
+            Logger.error('Number: Incorrect integers length: ' + options.integersLength + '. Integers length must be greater than 0.');
         }
     },
     convertToNumber: function (value) {
@@ -115,4 +110,4 @@ NumberInput.getOptionTypes = function () {
 };
 
 export = NumberInput;
-   
+

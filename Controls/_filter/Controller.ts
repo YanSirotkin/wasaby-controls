@@ -140,7 +140,7 @@ const _private = {
                      recent = source.getRecent();
                      if (recent.getCount()) {
                         lastFilter = recent.at(ACTIVE_HISTORY_FILTER_INDEX);
-                        result.callback(source.getDataObject(lastFilter.get('ObjectData')));
+                        result.callback(source.getDataObject(lastFilter));
                      } else {
                         result.callback([]);
                      }
@@ -191,7 +191,7 @@ const _private = {
                  if (hItems && hItems.getCount()) {
                      hItems.each((item, index) => {
                          if (!result) {
-                             historyData = historySource.getDataObject(item.get('ObjectData'));
+                             historyData = historySource.getDataObject(item);
 
                              if (historyData) {
                                  minimizedItemFromOption = _private.minimizeFilterItems(items);
@@ -500,14 +500,15 @@ const _private = {
       }
 
       /**
-       * Контрол-контроллер, который позволяет фильтровать данные в {@link Controls/list:View}, используя {@link Controls/filter:Selector} или {@link Controls/filter:Fast}.
+       * Контрол используют в качестве контроллера, который позволяет фильтровать данные в {@link Controls/list:View}, используя {@link Controls/filter:Selector} или {@link Controls/filter:Fast}.
        * Контроллер позволяет сохранять историю фильтра и восстанавливать страницу после перезагрузки с последним примененным фильтром.
-       *
-       * Подробнее читайте <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/'>здесь</a>.
+       * @remark
+       * Подробнее об организации поиска и фильтрации в реестре читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/ здесь}.
+       * Подробнее о классификации контролов Wasaby и схеме их взаимодействия читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/component-kinds/ здесь}.
        *
        * @class Controls/_filter/Controller
        * @extends Core/Control
-       * @mixes Controls/interface/IFilter
+       * @mixes Controls/_interface/IFilter
        * @mixes Controls/_filter/IPrefetch
        * @control
        * @public
@@ -522,7 +523,7 @@ const _private = {
        *
        * @class Controls/_filter/Controller
        * @extends Core/Control
-       * @mixes Controls/interface/IFilter
+       * @mixes Controls/_interface/IFilter
        * @control
        * @public
        * @author Герасимов А.М.

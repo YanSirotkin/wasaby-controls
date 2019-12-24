@@ -1,8 +1,12 @@
-define(['Controls/history', 'Core/Deferred'], (history, Deferred) => {
+/* global assert */
+define(['Controls/history', 'Core/Deferred', 'Env/Env'], (history, Deferred, Env) => {
 
    describe('Controls/history:Service', () => {
 
-      it('query', () => {
+      it('query', (done) => {
+         const isBrowser = Env.constants.isBrowserPlatform;
+         Env.constants.isBrowserPlatform = true;
+
          const service = new history.Service({historyId: 'testId'});
          const loadDeferred = new Deferred();
 
@@ -12,13 +16,14 @@ define(['Controls/history', 'Core/Deferred'], (history, Deferred) => {
          assert.isTrue(queryDef === loadDeferred);
 
          let nextQuery = service.query();
-         let loadData, expectedData = 'test';
+         const expectedData = 'test';
          service.saveHistory('testId', expectedData);
          nextQuery.addCallback((data) => {
-            loadData = data;
+            assert.equal(data, expectedData);
+            done();
          });
          loadDeferred.callback();
-         assert.equal(loadData, expectedData);
+         Env.constants.isBrowserPlatform = isBrowser;
       });
 
       it('destroy', () => {

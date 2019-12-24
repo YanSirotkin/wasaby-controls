@@ -1,3 +1,4 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
 import template = require('wml!Controls/_filter/View/View');
 import CoreClone = require('Core/core-clone');
@@ -5,7 +6,6 @@ import Merge = require('Core/core-merge');
 import ParallelDeferred = require('Core/ParallelDeferred');
 import Deferred = require('Core/Deferred');
 import converterFilterItems = require('Controls/_filter/converterFilterItems');
-import {Utils} from 'Controls/dateRange';
 import {isEqual} from 'Types/object';
 import {Controller as SourceController} from 'Controls/source';
 import {dropdownHistoryUtils as historyUtils} from 'Controls/dropdown';
@@ -14,18 +14,23 @@ import {object} from 'Types/util';
 import {factory} from 'Types/chain';
 import {RecordSet} from 'Types/collection';
 import {getItemsWithHistory, isHistorySource, getUniqItems} from 'Controls/_filter/HistoryUtils';
+import {hasResetValue} from 'Controls/_filter/resetFilterUtils';
 import {resetFilter} from 'Controls/_filter/resetFilterUtils';
 import mergeSource from 'Controls/_filter/Utils/mergeSource';
 import * as defaultItemTemplate from 'wml!Controls/_filter/View/ItemTemplate';
 import {SyntheticEvent} from 'Vdom/Vdom';
 
 /**
- * Контрол для фильтрации данных. Предоставляет возможность отображать и редактировать фильтр в удобном для пользователя виде.
+ * Контрол "Объединенный фильтр". Предоставляет возможность отображать и редактировать фильтр в удобном для пользователя виде.
  * Состоит из кнопки-иконки, строкового представления выбранного фильтра и параметров быстрого фильтра.
- * При клике на кнопку-иконку или строковое представления, открывается панель фильтров {@link Controls/filterPopup:DetailPanel}.
- * Клик на параметры быстрого фильтра открывает панель "Быстрых фильтров" {@link Controls/filterPopup:SimplePanel}.
- * Подробное описание и инструкции по настройке контрола можно найти <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/'>здесь</a>
- * Здесь вы можете посмотреть <a href="/materials/demo-ws4-filter-view">демонстрационный пример</a>.
+ * @remark
+ * См. <a href="/materials/demo-ws4-filter-view">демо-пример</a>
+ * Подробнее о работе с контролом читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-view/ здесь}.
+ * Подробнее об организации поиска и фильтрации в реестре читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/ здесь}.
+ * Подробнее о классификации контролов Wasaby и схеме их взаимодействия читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/component-kinds/ здесь}.
+ * 
+ * При клике на кнопку-иконку или строковое представления открывается панель фильтров, созданная на основе {@link Controls/filterPopup:DetailPanel}.
+ * При клике на параметры быстрого фильтра открывается панель "Быстрых фильтров", созданная на основе {@link Controls/filterPopup:SimplePanel}.
  *
  * @class Controls/_filter/View
  * @extends Core/Control
@@ -34,6 +39,10 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @public
  * @author Золотова Э.Е.
  * @demo Controls-demo/FilterView/ItemTemplates/Index
+ * 
+ * @see Controls/filterPopup:SimplePanel
+ * @see Controls/filterPopup:DetailPanel
+ * @see Controls/filter:ViewContainer
  */
 
 /*
@@ -48,6 +57,9 @@ import {SyntheticEvent} from 'Vdom/Vdom';
  * @control
  * @public
  * @author Золотова Э.Е.
+ * @see Controls/filterPopup:SimplePanel
+ * @see Controls/filterPopup:DetailPanel
+ * @see Controls/filter:FastContainer
  */
 
 var _private = {
@@ -65,9 +77,10 @@ var _private = {
       return item.viewMode === 'frequent';
     },
 
-    prepareItems: function(self, items) {
+    resolveItems: function(self, items) {
         // When serializing the Date, "_serializeMode" field is deleted, so object.clone can't be used
         self._source = CoreClone(items);
+        self._hasResetValues = hasResetValue(items);
     },
 
     calculateStateSourceControllers: function(configs, source) {
@@ -138,7 +151,7 @@ var _private = {
     },
 
     getHasMoreText: function(selection) {
-        return selection.length > 1 ? ', ' + rk('еще ') + (selection.length - 1) : '';
+        return selection.length > 1 ? ', ' + rk('еще') + ' ' + (selection.length - 1) : '';
     },
 
     getFastText: function(config, selectedKeys) {
@@ -189,7 +202,7 @@ var _private = {
                         self._displayText[item.name].hasMoreText = _private.getHasMoreText(flatSelectedKeys);
                     }
                     if (item.textValue !== undefined && !detailPanelHandler) {
-                        item.textValue = self._displayText[item.name].text + self._displayText[item.name].hasMoreText;
+                        item.textValue = self._displayText[item.name].title;
                     }
                 }
             }
@@ -481,11 +494,11 @@ var _private = {
         if (oldItems.length !== newItems.length) {
             result = true;
         } else {
-            factory(oldItems).each((oldItem) => {
-                const newItem = _private.getItemByName(newItems, oldItem.name);
-                const isFrequent = _private.isFrequentItem(oldItem);
-                if (newItem && (isFrequent || _private.isFrequentItem(newItem)) &&
-                    (optionsToCheck.reduce(getOptionsChecker(oldItem, newItem), false) || isFrequent !== _private.isFrequentItem(newItem))) {
+            factory(newItems).each((newItem) => {
+                const oldItem = _private.getItemByName(oldItems, newItem.name);
+                const isFrequent = _private.isFrequentItem(newItem);
+                if (isFrequent && (!oldItem || !_private.isFrequentItem(oldItem) ||
+                    optionsToCheck.reduce(getOptionsChecker(oldItem, newItem), false))) {
                     result = true;
                 }
             });
@@ -552,6 +565,7 @@ var Filter = Control.extend({
     _source: null,
     _idOpenSelector: null,
     _dateRangeItem: null,
+    _hasResetValues: true,
 
     _beforeMount: function(options, context, receivedState) {
         this._configs = {};
@@ -561,11 +575,11 @@ var Filter = Control.extend({
 
         if (receivedState) {
             this._configs = receivedState.configs;
-            _private.prepareItems(this, options.source);
+            _private.resolveItems(this, options.source);
             _private.calculateStateSourceControllers(this._configs, this._source);
             _private.updateText(this, this._source, this._configs);
         } else if (options.source) {
-            _private.prepareItems(this, options.source);
+            _private.resolveItems(this, options.source);
             resultDef = _private.reload(this);
         }
         this._hasSelectorTemplate = _private.hasSelectorTemplate(this._configs);
@@ -576,7 +590,7 @@ var Filter = Control.extend({
         if (newOptions.source && newOptions.source !== this._options.source) {
             const self = this;
             let resultDef;
-            _private.prepareItems(this, newOptions.source);
+            _private.resolveItems(this, newOptions.source);
             if (_private.isNeedReload(this._options.source, newOptions.source) || _private.isNeedHistoryReload(this._configs)) {
                 resultDef = _private.reload(this).addCallback(() => {
                     self._hasSelectorTemplate = _private.hasSelectorTemplate(self._configs);
@@ -610,8 +624,8 @@ var Filter = Control.extend({
                     vertical: 'top',
                     horizontal: 'right'
                 };
-                popupOptions.horizontalAlign = {
-                    side: 'left'
+                popupOptions.direction = {
+                    horizontal: 'left'
                 };
             }
             popupOptions.template = this._options.detailPanelTemplateName;
@@ -665,18 +679,20 @@ var Filter = Control.extend({
     },
 
     _rangeChangedHandler: function(event, start, end) {
-        let dateRangeItem = _private.getDateRangeItem(this._source);
-        dateRangeItem.value = [start, end];
-        dateRangeItem.textValue = Utils.formatDateRangeCaption(start, end,
-            this._dateRangeItem.editorOptions.emptyCaption || 'Не указан');
-        _private.notifyChanges(this, this._source);
-        this._dateRangeItem = object.clone(dateRangeItem);
+       return import('Controls/dateRange').then((dateRange) => {
+          let dateRangeItem = _private.getDateRangeItem(this._source);
+          dateRangeItem.value = [start, end];
+          dateRangeItem.textValue = dateRange.Utils.formatDateRangeCaption(start, end,
+             this._dateRangeItem.editorOptions.emptyCaption || 'Не указан');
+          this._dateRangeItem = object.clone(dateRangeItem);
+          _private.notifyChanges(this, this._source);
+       });
     },
 
     _resultHandler: function(event, result) {
         if (!result.action) {
             const filterSource = converterFilterItems.convertToFilterSource(result.items);
-            _private.prepareItems(this, mergeSource(this._source, filterSource));
+            _private.resolveItems(this, mergeSource(this._source, filterSource));
             _private.updateText(this, this._source, this._configs, true);
         } else {
             _private[result.action].call(this, result);
@@ -705,16 +721,14 @@ var Filter = Control.extend({
         return isReseted;
     },
 
-    _needShowFastFilter(source: object[], panelTemplateName?: string): boolean {
+    _needShowFastFilter(source: object[]): boolean {
         let needShowFastFilter = false;
 
-        if (panelTemplateName) {
-            factory(source).each((item) => {
-                if (!needShowFastFilter && _private.isFrequentItem(item)) {
-                    needShowFastFilter = true;
-                }
-            });
-        }
+        factory(source).each((item) => {
+            if (!needShowFastFilter && _private.isFrequentItem(item)) {
+                needShowFastFilter = true;
+            }
+        });
 
         return needShowFastFilter;
     },
@@ -755,6 +769,7 @@ var Filter = Control.extend({
 
 Filter.getDefaultOptions = function() {
     return {
+        panelTemplateName: 'Controls/filterPopup:SimplePanel',
         alignment: 'right',
         itemTemplate: defaultItemTemplate
     };

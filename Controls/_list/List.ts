@@ -10,16 +10,18 @@ import viewName = require('Controls/_list/ListView');
 import viewTemplate = require('Controls/_list/ListControl');
 
 /**
- * Простой список с пользовательским шаблоном элемента. Может загружать данные из источника данных.
- * Подробное описание и инструкцию по настройке контрола вы можете прочитать <a href='https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/'>здесь</a>.
+ * Контрол «Плоский список» с пользовательским шаблоном элемента. Может загружать данные из источника данных.
+ * @remark
+ * Подробное описание и инструкцию по настройке контрола вы можете прочитать {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/ здесь}.
  *
  * @class Controls/_list/List
  * @extends Core/Control
+ * @implements Controls/_interface/IErrorController
  * @mixes Controls/_interface/ISource
  * @mixes Controls/interface/IItemTemplate
  * @mixes Controls/interface/IPromisedSelectable
- * @mixes Controls/interface/INavigation
- * @mixes Controls/interface/IFilter
+ * @mixes Controls/_interface/INavigation
+ * @mixes Controls/_interface/IFilter
  * @mixes Controls/interface/IHighlighter
  * @mixes Controls/_list/interface/IList
  * @mixes Controls/interface/IEditableList
@@ -49,12 +51,13 @@ import viewTemplate = require('Controls/_list/ListControl');
  *
  * @class Controls/_list/List
  * @extends Core/Control
+ * @implements Controls/_interface/IErrorController
  * @mixes Controls/_interface/ISource
  * @mixes Controls/interface/IItemTemplate
  * @mixes Controls/interface/IPromisedSelectable
  * @mixes Controls/interface/IGroupedList
- * @mixes Controls/interface/INavigation
- * @mixes Controls/interface/IFilter
+ * @mixes Controls/_interface/INavigation
+ * @mixes Controls/_interface/IFilter
  * @mixes Controls/interface/IHighlighter
  * @mixes Controls/_list/interface/IList
  * @mixes Controls/_interface/ISorting
@@ -109,8 +112,8 @@ var ListControl = Control.extend(/** @lends Controls/_list/List.prototype */{
         return listControl.reloadItem.apply(listControl, arguments);
     },
 
-    scrollToItem(key: string|number, toBottom: boolean): void {
-        this._children.listControl.scrollToItem(key, toBottom);
+    scrollToItem(key: string|number, toBottom: boolean): Promise<void> {
+        return this._children.listControl.scrollToItem(key, toBottom);
     },
 
     beginEdit: function(options) {

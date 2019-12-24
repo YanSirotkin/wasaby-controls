@@ -29,11 +29,16 @@
 
 /**
  * @name Controls/_treeGrid/interface/ITreeControl#expandByItemClick
- * @cfg {Boolean} Определят режим разворота узла в дереве.
- * @variant true Разворачивание и сворачивание узла осуществляется по клику на него.
- * @variant false Разворачивание и сворачивание узла осуществляется только по клику на экспандер.
+ * @cfg {Boolean} Определят режим разворачивания и сворачивания узлов в {@link Controls/treeGrid:View дереве}.
  * @default false
- * <a href="/materials/demo-ws4-tree-grid-base">Example</a>.
+ * @remark
+ * См. <a href="/materials/demo-ws4-tree-grid-base">демо-пример</a>
+ * Доступные значения:
+ * 
+ * * true — осуществляется по клику на него.
+ * * false — осуществляется только по клику на экспандер.
+ * @see expandedItems
+ * @see expanderVisibility
  */
 
 /*
@@ -47,11 +52,13 @@
 
 /**
  * @name Controls/_treeGrid/interface/ITreeControl#expandedItems
- * @cfg {{Array.<String>}} Массив идентификаторов развернутых узлов дерева.
- * <b>Note:</b>
- * Чтобы развернуть все элементы списка, параметр expandedItems должен быть задан как массив, содержащий один элемент - "null".
- * В этом случае предполагается, что все данные будут загружены сразу.
- * <a href="/materials/demo-ws4-tree-grid-base">Example</a>.
+ * @cfg {Array.<String>|undefined} Устанавливает массив идентификаторов развернутых узлов {@link Controls/treeGrid:View дерева}.
+ * @default undefined
+ * @remark
+ * См. <a href="/materials/demo-ws4-tree-grid-base">демо-пример</a>
+ * Чтобы развернуть все элементы списка, параметр expandedItems должен быть задан как массив, содержащий один элемент — "null". В этом случае предполагается, что все данные будут загружены сразу.
+ * @see expandByItemClick
+ * @see expanderVisibility
  */
 
 /*
@@ -149,12 +156,21 @@
  */
 
 /**
- * @name Controls/_treeGrid/interface/ITreeControl#expanderVisibility
- * @cfg {String} Режим отображения элемента развертывания узла дерева.
+ * @typedef {String} ExpanderVisibility
  * @variant visible Всегда показывать экспандер для узлов и отступ для листьев.
  * @variant hasChildren Показывать экспандер только для узлов с дочерними элементами.
+ */
+
+
+
+/**
+ * @name Controls/_treeGrid/interface/ITreeControl#expanderVisibility
+ * @cfg {ExpanderVisibility} Устанавливает режим отображения элемента развертывания узла {@link Controls/treeGrid:View дерева}.
  * @default visible
- * <a href="/materials/demo-ws4-tree-grid-extended">Example</a>.
+ * @remark
+ * См. <a href="/materials/demo-ws4-tree-grid-extended">демо-пример</a>.
+ * @see expandedItems
+ * @see expandByItemClick
  */
 
 /*
@@ -177,11 +193,70 @@
  */
 
 /**
+ * @name Controls/_treeGrid/interface/ITreeControl#deepReload
+ * @cfg {Boolean} Опередяет, нужно ли выполнять перезагрузку с сохранением раскрытых узлов.
+ * @remark
+ * Перезагрузка выполняется с сохранением раскрытых узлов, даже при изменении опций filter, source, sorting и тд.
+ * В поле фильтра, указанное в parentProperty будет отправлен массив раскрытых узлов.
+ * Если в результате запроса для этих узлов будут присланы дочерние элементы, то узлы останутся раскрытыми, иначе они будут свёрнуты.
+ * @notice Постраничная навигация в запросе передается для корня и её параметр {@link Controls/_interface/INavigation/PageSourceConfig.typedef pageSize} необходимо применять для всех узлов.
+ * @notice Обратите внимание! При смене фильтра/навигации/source список раскрытых узлов сбрасывается.
+ * @example
+ * Пример списочного метода БЛ
+ * <pre>
+ * def Test.MultiRoot(ДопПоля, Фильтр, Сортировка, Навигация):
+ *      rs = RecordSet(CurrentMethodResultFormat())
+ *      if Навигация.Type() == NavigationType.ntMULTI_ROOT:
+ *          nav_result = {}
+ *          for id, nav in Навигация.Roots().items():
+ *              # Запрашиваем данные по одному разделу.
+ *              Фильтр.Раздел = id
+ *              tmp_rs = Test.MultiRoot(ДопПоля, Фильтр, Сортировка, nav)
+ *              # Склеиваем результаты.
+ *              for rec in tmp_rs:
+ *                  rs.AddRow(rec)
+ *              # Формируем общий результа навигации по всем разделам.
+ *              nav_result[ id ] = tmp_rs.nav_result
+ *          rs.nav_result = NavigationResult(nav_result)
+ *      else:
+ *          # Тут обработка обычной навигации, например, вызов декларативного списка.
+ *          rs = Test.DeclList(ДопПоля, Фильтр, Сортировка, Навигация)
+ *      return rs
+ *</pre>
+ */
+
+/**
  * @event Controls/_treeGrid/interface/ITreeControl#itemExpanded Происходит после развертывания узла.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Types/entity:Model} node Развёрнутый узел.
  * @remark
  * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ * @deprecated Событие устарело и в ближайшее время его поддержка будет прекращена. Используте {@link Controls/_treeGrid/interface/ITreeControl#afterItemExpand}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#afterItemExpand Происходит после развертывания узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Развёрнутый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#beforeItemExpand Происходит перед развертыванием узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Разворачиваемый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#itemExpand Происходит перед развертыванием узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Разворачиваемый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ * @deprecated Событие устарело и в ближайшее время его поддержка будет прекращена. Используте {@link Controls/_treeGrid/interface/ITreeControl#beforeItemExpand}.
  */
 
 /*
@@ -194,6 +269,32 @@
  * @event Controls/_treeGrid/interface/ITreeControl#itemCollapsed Происходит после сворачивания узла.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Types/entity:Model} node Свёрнутый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ * @deprecated Событие устарело и в ближайшее время его поддержка будет прекращена. Используте {@link Controls/_treeGrid/interface/ITreeControl#afterItemCollapse}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#afterItemCollapse Происходит после сворачивания узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Свёрнутый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#itemCollapse Происходит перед сворачиванием узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Сворачиваемый узел.
+ * @remark
+ * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
+ * @deprecated Событие устарело и в ближайшее время его поддержка будет прекращена. Используте {@link Controls/_treeGrid/interface/ITreeControl#beforeItemCollapse}.
+ */
+
+/**
+ * @event Controls/_treeGrid/interface/ITreeControl#beforeItemCollapse Происходит перед сворачиванием узла.
+ * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
+ * @param {Types/entity:Model} node Сворачиваемый узел.
  * @remark
  * Что такое "узел" читайте в {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy руководстве разработчика}.
  */
@@ -211,7 +312,7 @@
  * Перезагрузка выполняется с сохранением раскрытых узлов.
  * При этом в поле фильтра, указанное в parentProperty будет отправлен массив раскрытых узлов.
  * Если в результате запроса для этих узлов будут присланы дочерние элементы, то узлы останутся раскрытыми, иначе они будут свёрнуты.
- * @notice Постраничная навигация в запросе передается для корня и её параметр {@link Controls/interface/INavigation/PageSourceConfig.typedef pageSize} необходимо применять для всех узлов.
+ * @notice Постраничная навигация в запросе передается для корня и её параметр {@link Controls/_interface/INavigation/PageSourceConfig.typedef pageSize} необходимо применять для всех узлов.
  * @notice Обратите внимание! При смене фильтра/навигации/source список раскрытых узлов сбрасывается.
  * @example
  * Пример списочного метода БЛ

@@ -1,4 +1,4 @@
-define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Controls/_filter/HistoryUtils', 'Types/collection'], function(Filter, Deferred, entity, HistoryUtils, collection) {
+define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Controls/_filter/HistoryUtils', 'Env/Env', 'Types/collection'], function(Filter, Deferred, entity, HistoryUtils, Env, collection) {
 
    describe('Controls.Filter.Controller', function () {
 
@@ -791,6 +791,7 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
       });
 
       it('_private.updateHistory', function(done) {
+         if (Env.constants.isServerSide) { return done(); }
          var fastFilterItems = [];
 
          var filterButtonItems = [];
@@ -897,6 +898,7 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
       });
 
       it('updateFilterHistory', function(done) {
+         if (Env.constants.isServerSide) { return done(); }
          let fastFilterItems = [],
             filterButtonItems = [];
          Filter.updateFilterHistory({historyId: 'TEST_HISTORY_ID', filterButtonItems: filterButtonItems, fastFilterItems: fastFilterItems});
@@ -959,7 +961,7 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
          sandbox.replace(HistoryUtils, 'getHistorySource', () => {
             return {
                getItems: () => historyItems,
-               getDataObject: (data) => data,
+               getDataObject: (data) => data.get('ObjectData'),
                getPinned: () => pinnedItems
             };
          });
@@ -983,7 +985,7 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
             PrefetchSessionId: 'testId'
          };
 
-         return new Promise(function(resolve) {
+         return new Promise(function(resolve, reject) {
             sandbox.replace(Filter._private, 'getHistoryByItems', () => {
                return {
                   data: {
@@ -1007,6 +1009,8 @@ define(['Controls/_filter/Controller', 'Core/Deferred', 'Types/entity', 'Control
                assert.deepEqual(result.filter, resultFilter);
                sandbox.restore();
                resolve();
+            }).addErrback(function(error) {
+               reject(error);
             });
          });
       });

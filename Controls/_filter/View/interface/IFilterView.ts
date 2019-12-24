@@ -23,8 +23,8 @@
  * Для задания элемента в качестве заголовка используйте шаблон Controls:filterPopup:SimplePanelEmptyItemTemplate.
  * @property {String} itemTemplateProperty Имя свойства, содержащего шаблон для рендеринга элементов. Подробнее - {@link Controls/interface/IDropdown#itemTemplateProperty}
  * Для задания элемента в качестве заголовка используйте шаблон Controls:filterPopup:SimplePanelEmptyItemTemplate.
- * @property {Object} filter Конфигурация фильтра-объект с именами полей и их значениями. {@link Controls/interface/IFilter}
- * @property {Object} navigation Конфигурация навигации по списку. Настройка навигации источника данных (страницы, смещение, положение) и представления навигации (страницы, бесконечная прокрутка и т. д.) {@link Controls/interface/INavigation}
+ * @property {Object} filter Конфигурация фильтра-объект с именами полей и их значениями. {@link Controls/_interface/IFilter}
+ * @property {Object} navigation Конфигурация навигации по списку. Настройка навигации источника данных (страницы, смещение, положение) и представления навигации (страницы, бесконечная прокрутка и т. д.) {@link Controls/_interface/INavigation}
  * @property {Types/collection:IList} items Специальная структура для визуального представления фильтра. {@link Types/collection:IList}.
  */
 
@@ -37,8 +37,8 @@
  * @property {Controls/interface/ISelectorDialog} selectorTemplate Items selection panel template.
  * @property {Function} itemTemplate Template for item render. For more information, see {@link Controls/interface/IDropdown#itemTemplate}
  * @property {String} itemTemplateProperty Name of the item property that contains template for item render. For more information, see {@link Controls/interface/IDropdown#itemTemplateProperty}
- * @property {Object} filter Filter configuration - object with field names and their values. {@link Controls/interface/IFilter}
- * @property {Object} navigation List navigation configuration. Configures data source navigation (pages, offset, position) and navigation view (pages, infinite scroll, etc.) {@link Controls/interface/INavigation}
+ * @property {Object} filter Filter configuration - object with field names and their values. {@link Controls/_interface/IFilter}
+ * @property {Object} navigation List navigation configuration. Configures data source navigation (pages, offset, position) and navigation view (pages, infinite scroll, etc.) {@link Controls/_interface/INavigation}
  * @property {Types/collection:IList} items Special structure for the visual representation of the filter. {@link Types/collection:IList}.
  */
 
@@ -99,7 +99,7 @@
  * TMPL:
  * <pre>
  *    <Controls.filter:View
- *       source={{_source}}
+ *       source="{{_source}}"
  *       detailPanelTemplateName="wml!MyModule/detailPanelTemplate"
  *       panelTemplateName="Controls/filterPopup:SimplePanel"/>
  * </pre>
@@ -147,7 +147,7 @@
  * TMPL:
  * <pre>
  *    <Controls.filter:View
- *       source={{_source}}
+ *       source="{{_source}}" 
  *       detailPanelTemplateName="wml!MyModule/detailPanelTemplate"
  *       panelTemplateName="Controls/filterPopup:SimplePanel"/>
  * </pre>
@@ -189,7 +189,7 @@
  * @cfg {String} Шаблон всплывающей панели, которая открывается после клика по кнопке.
  * @remark
  * В качестве шаблона рекомендуется использовать контрол {@link Controls/filterPopup:DetailPanel}
- * Подробнее о настройке панели фильтров читайте <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/filterbutton-and-fastfilters/'>здесь</a>.
+ * Подробнее о настройке панели фильтров читайте <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/'>здесь</a>.
  * Важно: для ленивой загрузки шаблона в опции укажите путь до контрола.
  * @example
  * Пример настройки параметров для двух фильтров.
@@ -217,7 +217,7 @@
  *       { name: 'deleted', value: true, resetValue: false, textValue: 'Deleted', viewMode: extended }
  *    ];
  * </pre>
- * @see <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/filterbutton-and-fastfilters/'>Руководство по настройке Кнопки фильтров с быстрыми фильтрами</a>
+ * @see <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/'>Руководство по настройке быстрого фильтра</a>
  * @see Controls.filterPopup:DetailPanel
  */
 
@@ -226,7 +226,7 @@
  * @cfg {String} Template for the pop-up panel, that opens after clicking on the button.
  * @remark
  * As a template, it is recommended to use the control {@link Controls/filterPopup:DetailPanel}
- * The description of setting up the filter panel you can read <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/filterbutton-and-fastfilters/'>here</a>.
+ * The description of setting up the filter panel you can read <a href='/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/'>here</a>.
  * Important: for lazy loading template in the option give the path to the control
  * @example
  * Example setting options for two filters.
@@ -386,9 +386,10 @@
  * @name Controls/_filter/View/interface/IFilterView#alignment
  * @cfg {String} Задаёт выравнивание элементов объединённого фильтра.
  * @remark
- * В значении "right" кнопка-иконка прикрепляется к правому краю. При этом панель фильтрации, быстрые фильтры и выбранные параметры фильтрации будут открываться/отображаться слева от кнопки-иконки.
+ * Варианты значений:
  * 
- * В значении "left" кнопка-иконка прикрепляется к левому краю, а поэтому отображение остальных элементов контрола будет справа.
+ * * **right**: Кнопка прикреплена к правому краю. Всплывающая панель открывается влево. Строка выбранных фильтров отображается слева от кнопки.
+ * * **left**: Кнопка прикреплена к левому краю. Всплывающая панель открывается вправо. Строка выбранных фильтров отображается справа от кнопки.
  * @default right
  * @example
  * Пример открытия панели фильтров справа:
@@ -447,6 +448,20 @@
  */
 
 /**
+ * @name Controls/_filter/View/interface/IFilterView#historyId
+ * @cfg {String} Уникальный идентификатор для сохранения истории фильтров.
+ * В истории будут храниться последние 10 применённых фильров.
+ * @remark
+ * {@link Controls/_filter/View Controls/filter:View} занимается только отображением истории последних применённых фильтров,
+ * чтобы работало сохранение в историю, контрол должен быть обёрнут в {@link Controls/_filter/Controller Controller}.
+ * @example
+ * WML:
+ * <pre>
+ *    <Controls.filter:View detailTemplateName="EDO.MyPanelTemplate" historyId="myHistoryId"/>
+ * </pre>
+ */
+
+/**
  * @event Controls/_filter/View/interface/IFilterView#filterChanged Происходит при изменении фильтра.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Object} filter Новый фильтр.
@@ -459,13 +474,13 @@
  */
 
 /**
- * @event Controls/_filter/View/interface/IFilterView#itemsChanged Происходит при изменении опции items.
+ * @event Controls/_filter/View/interface/IFilterView#sourceChanged Происходит при изменении опции source.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Array.<FilterItem>} items Новая структура фильтра.
  */
 
 /*
- * @event Controls/_filter/View/interface/IFilterView#itemsChanged Happens when items changed.
+ * @event Controls/_filter/View/interface/IFilterView#sourceChanged Happens when source changed.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Descriptor of the event.
  * @param {Object} items New items.
  */

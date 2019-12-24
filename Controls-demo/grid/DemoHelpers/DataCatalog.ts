@@ -5,6 +5,11 @@ import {constants} from 'Env/Env'
 import 'wml!Controls-demo/grid/_resources/CellTemplates/LadderTasksPhoto'
 import 'wml!Controls-demo/grid/_resources/CellTemplates/LadderTasksDescription'
 import 'wml!Controls-demo/grid/_resources/CellTemplates/LadderTasksReceived'
+import * as Images from 'Controls-demo/DragNDrop/Images';
+import * as itemTpl from  'wml!Controls-demo/grid/_resources/CellTemplates/CellWithBgc';
+import * as itemCountr from 'wml!Controls-demo/grid/_resources/CellTemplates/CountryTemp';
+
+
 
 
 const resultCellTpl = numberResultTpl;
@@ -184,6 +189,30 @@ function getCountriesStats() {
                 populationDensity: 21.73
             }
         ],
+        getColumnsForVirtual: () => [
+            {
+                displayProperty: 'number',
+                width: '40px'
+            },
+            {
+                displayProperty: 'country',
+                width: '200px'
+            },
+            {
+                displayProperty: 'capital',
+                width: '200px'
+            },
+        ],
+
+        getColumnsForLoad: () => [
+            {
+                displayProperty: 'id',
+            },
+            {
+                displayProperty: 'load',
+            },
+        ],
+
         getColumnsWithoutWidths: () => [
             {
                 displayProperty: 'number',
@@ -203,6 +232,17 @@ function getCountriesStats() {
             {
                 displayProperty: 'populationDensity',
             }
+        ],
+        getColumnsForLoad: () => [
+            {
+                displayProperty: 'id',
+                width: '50px',
+            },
+            {
+                displayProperty: 'load',
+                width: '200px',
+            },
+
         ],
         getColumnsWithFixedWidths: () => [
             {
@@ -721,6 +761,71 @@ function getPorts() {
     }
 }
 
+function getEditing() {
+    return {
+        getEditingData: () => [
+            {
+                id: '1',
+                title: 'Время',
+                description: 'Погода',
+                price: 1,
+                balance: 1,
+                balanceCostSumm: 2,
+                reserve: 2,
+                costPrice: 3
+            },
+            {
+                id: '2',
+                title: 'Масса',
+                description: 'Скорость',
+                price: 1,
+                balance: 1,
+                balanceCostSumm: 2,
+                reserve: 2,
+                costPrice: 3
+            },
+            {
+                id: '3',
+                title: 'Давление',
+                description: 'Плотность',
+                price: 1,
+                balance: 1,
+                balanceCostSumm: 2,
+                reserve: 2,
+                costPrice: 3
+            },
+        ],
+        getEditingColumns: () => [
+            {
+                displayProperty: 'title',
+                width: '200px',
+                template: 'wml!Controls-demo/grid/EditInPlace/EditingCell/_cellEditor'
+            },
+            {
+                displayProperty: 'price',
+                width: '50px',
+            },
+            {
+                displayProperty: 'balance',
+                width: '50px',
+            },
+            {
+                displayProperty: 'description',
+                width: '200px',
+                template: 'wml!Controls-demo/grid/EditInPlace/EditingCell/_cellEditor'
+            },
+            {
+                displayProperty: 'costPrice',
+                width: '50px',
+            },
+            {
+                displayProperty: 'balanceCostSumm',
+                width: '50px',
+            }
+        ]
+    };
+}
+
 function forShowWidths() {
     return {
         getData() {
@@ -798,9 +903,248 @@ function forShowWidths() {
     }
 }
 
+const cellPadding = () => ({
+    getCollumns: () => ([
+        {
+            displayProperty: 'number',
+            width: '100px',
+            template: itemCountr,
+            cellPadding: {
+                right: 's'
+            }
+        },
+        {
+            displayProperty: 'country',
+            width: '100px',
+            template: itemTpl,
+            cellPadding: {
+                left: 's',
+                right: 'null'
+            }
+        },
+        {
+            displayProperty: 'capital',
+            width: '100px'
+        },
+    ]),
+    getData: () => ([
+        {
+            id: 0,
+            number: 'Russian Federation',
+            country: 'Российская Федерация',
+            capital: 'Москва',
+            population: 143420300,
+            square: 17075200,
+            populationDensity: 8
+        },
+        {
+            id: 1,
+            number: 'Canada',
+            country: 'Канада',
+            capital: 'Оттава',
+            population: 32805000,
+            square: 9976140,
+            populationDensity: 3
+        },
+        {
+            id: 2,
+            number: 'Unated States of America',
+            country: 'Соединенные Штаты Америки',
+            capital: 'Вашингтон',
+            population: 295734100,
+            square: 9629091,
+            populationDensity: 30.71
+        },
+        {
+            id: 3,
+            number: 'Peoples Republic of China',
+            country: 'Китайская народная республика',
+            capital: 'Пекин',
+            population: 1306313800,
+            square: 9596960,
+            populationDensity: 136.12
+        },
+        {
+            id: 4,
+            number: 'trinidad and tabago',
+            country: 'Тринидад и Табаго',
+            capital: 'Город',
+            population: 186112800,
+            square: 8511965,
+            populationDensity: 21.86
+        }
+    ]),
+    getCellPaddingHeader: () => {
+        return [
+            {
+                title: 'right: S',
+            },
+            {
+                title: 'left: S and right: null',
+            },
+            {
+                title: 'left: default',
+            }
+        ];
+    }
+})
+
+const DragNDrop = () => ({
+    data: [{
+        id: 0,
+        title: 'America',
+        additional: 'USA',
+        image: Images[0],
+        'Раздел@': true,
+        'Раздел': null
+    }, {
+        id: 1,
+        title: 'France',
+        additional: 'Europe',
+        image: Images[1],
+        'Раздел@': true,
+        'Раздел': null
+    }, {
+        id: 2,
+        title: 'Solar',
+        additional: 'Star',
+        image: Images[2],
+        'Раздел@': true,
+        'Раздел': null
+    }, {
+        id: 3,
+        title: 'Luna',
+        additional: 'Sattelite',
+        image: Images[3],
+        'Раздел@': null,
+        'Раздел': null
+    }, {
+        id: 4,
+        title: 'Pizza',
+        additional: 'Food',
+        image: Images[4],
+        'Раздел@': null,
+        'Раздел': null
+    }, {
+        id: 5,
+        title: 'Monkey',
+        additional: 'Animals',
+        image: Images[5],
+        'Раздел@': null,
+        'Раздел': null
+    }],
+    columns: [{
+        displayProperty: 'id',
+        width: '30px'
+    }, {
+        displayProperty: 'title',
+        width: '200px',
+    }, {
+        displayProperty: 'additional',
+        width: '200px',
+    }],
+})
+
+const changeSourceData = () => ({
+    data: [
+        {
+            id: 1,
+            load: 'One',
+            title: 'hello'
+        }, {
+            id: 2,
+            load: 'Two',
+            title: 'hello'
+
+        }, {
+            id: 3,
+            load: 'three',
+            title: 'hello'
+
+        }, {
+            id: 4,
+            load: 'Four',
+            title: 'hello'
+
+        }, {
+            id: 5,
+            load: 'Five',
+            title: 'hello'
+
+        }, {
+            id: 6,
+            load: 'Six',
+            title: 'hello'
+
+        }, {
+            id: 7,
+            load: 'Seven',
+            title: 'hello'
+
+        }],
+    data2: [
+        {
+            id: 1,
+            load: 1,
+            title: 'hello'
+        }, {
+            id: 2,
+            load: 2,
+            title: 'hello'
+
+        }, {
+            id: 3,
+            load: 2,
+            title: 'hello'
+
+        }, {
+            id: 4,
+            load: 2,
+            title: 'hello'
+
+        }, {
+            id: 5,
+            load: 2,
+            title: 'hello'
+
+        }, {
+            id: 6,
+            load: 2,
+            title: 'hello'
+
+        }, {
+            id: 7,
+            load: 2,
+            title: 'hello'
+
+        }]
+});
+
+
+const countries = ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua &amp; Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas"
+    ,"Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bosnia &amp; Herzegovina","Botswana","Brazil","British Virgin Islands"
+    ,"Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Cayman Islands","Chad","Chile","China","Colombia","Congo","Cook Islands","Costa Rica"
+    ,"Cote D Ivoire","Croatia","Cruise Ship","Cuba","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea"
+    ,"Estonia","Ethiopia","Falkland Islands","Faroe Islands","Fiji","Finland","France","French Polynesia","French West Indies","Gabon","Gambia","Georgia","Germany","Ghana"
+    ,"Gibraltar","Greece","Greenland","Grenada","Guam","Guatemala","Guernsey","Guinea","Guinea Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India"
+    ,"Indonesia","Iran","Iraq","Ireland","Isle of Man","Israel","Italy","Jamaica","Japan","Jersey","Jordan","Kazakhstan","Kenya","Kuwait","Kyrgyz Republic","Laos","Latvia"
+    ,"Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Macau","Macedonia","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Mauritania"
+    ,"Mauritius","Mexico","Moldova","Monaco","Mongolia","Montenegro","Montserrat","Morocco","Mozambique","Namibia","Nepal","Netherlands","Netherlands Antilles","New Caledonia"
+    ,"New Zealand","Nicaragua","Niger","Nigeria","Norway","Oman","Pakistan","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal"
+    ,"Puerto Rico","Qatar","Reunion","Romania","Russia","Rwanda","Saint Pierre &amp; Miquelon","Samoa","San Marino","Satellite","Saudi Arabia","Senegal","Serbia","Seychelles"
+    ,"Sierra Leone","Singapore","Slovakia","Slovenia","South Africa","South Korea","Spain","Sri Lanka","St Kitts &amp; Nevis","St Lucia","St Vincent","St. Lucia","Sudan"
+    ,"Suriname","Swaziland","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor L'Este","Togo","Tonga","Trinidad &amp; Tobago","Tunisia"
+    ,"Turkey","Turkmenistan","Turks &amp; Caicos","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","United States Minor Outlying Islands","Uruguay"
+    ,"Uzbekistan","Venezuela","Vietnam","Virgin Islands (US)","Yemen","Zambia","Zimbabwe"];
+
 export {
     getCountriesStats,
     getTasks,
     getPorts,
-    forShowWidths
+    forShowWidths,
+    getEditing,
+    countries,
+    DragNDrop,
+    cellPadding,
+    changeSourceData
 }

@@ -1,7 +1,7 @@
 define([
    'Core/core-merge',
    'Controls/calendar',
-   'SBIS3.CONTROLS/Utils/DateUtil',
+   'Controls/Utils/Date',
    'ControlsUnit/Calendar/Utils'
 ], function(
    coreMerge,
@@ -39,7 +39,8 @@ define([
          it('should generate "itemClick" event', function() {
             let sandbox = sinon.sandbox.create(),
                mv = calendarTestUtils.createComponent(calendar.MonthView, config),
-               item = 'item';
+               item = 'item',
+               event = 'event';
 
             sandbox.stub(mv, '_notify');
             [{
@@ -49,8 +50,8 @@ define([
                isCurrentMonth: true,
                mode: 'current'
             }].forEach(function (test) {
-               mv._dayClickHandler({}, item, test.mode, test.isCurrentMonth);
-               sinon.assert.calledWith(mv._notify, 'itemClick', [item]);
+               mv._dayClickHandler(event, item, test.mode, test.isCurrentMonth);
+               sinon.assert.calledWith(mv._notify, 'itemClick', [item, event]);
             });
 
             sandbox.restore();

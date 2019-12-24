@@ -1,3 +1,6 @@
+import { RecordSet } from 'Types/collection';
+import { TemplateFunction } from 'UI/Base';
+
 /**
  * Интерфейс для списков.
  *
@@ -5,6 +8,96 @@
  * @public
  * @author Авраменко А.С.
  */
+
+type TMultiSelectVisibility = 'visible'|'onhover'|'hidden';
+/**
+ * @typedef {String} TIconStyle
+ * @variant default
+ * @variant attention
+ * @variant error
+ * @variant done
+ */
+type TIconStyle = 'default'|'attention'|'error'|'done';
+/**
+ * @typedef {String} TItemActionsPosition
+ * @variant inside Внутри элемента.
+ * @variant outside Под элементом.
+ * @variant custom Произвольная позиция отображения. Задаётся через шаблон {@link Controls/interface/IItemTemplate itemTemplate}.
+ */
+type TItemActionsPosition = 'inside'|'outside'|'custom';
+/**
+ * @typedef {String} TActionAlignment
+ * @variant horizontal По горизонтали.
+ * @variant vertical По вертикали.
+ */
+type TActionAlignment = 'horizontal'|'vertical';
+/**
+ * @typedef {String} TActionCaptionPosition
+ * @variant right Справа от иконки опции записи.
+ * @variant bottom Под иконкой опции записи.
+ * @variant none Не будет отображаться.
+ */
+type TActionCaptionPosition = 'right'|'bottom'|'none';
+type TMarkerVisibility = 'visible'|'onactivated'|'hidden';
+type TListStyle = 'master'|'default';
+type TVerticalItemPadding = 'S'|null;
+type THorizontalItemPadding = 'XS'|'S'|'M'|'L'|'XL'|'XXL'|null;
+
+interface IContextMenuConfig {
+    items?: RecordSet;
+    groupTemplate?: TemplateFunction|string;
+    groupingKeyCallback?: (item) => string;
+    itemTemplate?: TemplateFunction|string;
+    footerTemplate?: TemplateFunction|string;
+    headerTemplate?: TemplateFunction|string;
+}
+
+interface IItemAction {
+    id: string;
+    title?: string;
+    icon?: string;
+    showType?: 0|1|2;
+    style?: string;
+    iconStyle?: TIconStyle;
+    handler?: (item) => void;
+    parent?: string;
+    'parent@'?: boolean|null;
+}
+
+interface IItemPadding {
+    top?: TVerticalItemPadding;
+    bottom?: TVerticalItemPadding;
+    left?: THorizontalItemPadding;
+    right?: THorizontalItemPadding;
+}
+
+interface ISelectionStrategy {
+    name: string;
+    options?;
+}
+
+export interface IList {
+    contextMenuVisibility?: boolean;
+    contextMenuConfig?: IContextMenuConfig;
+    emptyTemplate?: TemplateFunction|string;
+    footerTemplate?: TemplateFunction|string;
+    multiSelectVisibility?: TMultiSelectVisibility;
+    itemActions?: IItemAction[];
+    itemActionsPosition?: TItemActionsPosition;
+    actionAlignment?: TActionAlignment;
+    actionCaptionPosition?: TActionCaptionPosition;
+    itemActionVisibilityCallback?: (action: IItemAction, item) => boolean;
+    itemActionsProperty?: string;
+    markedKey?: string|number;
+    markerVisibility?: TMarkerVisibility;
+    uniqueKeys?: boolean;
+    itemsReadyCallback?: (items) => void;
+    dataLoadCallback?: (items) => void;
+    dataLoadErrback?: () => void;
+    style?: TListStyle;
+    itemPadding?: IItemPadding;
+    selectionStrategy?: ISelectionStrategy;
+}
 
 /*
  * Interface for lists.
@@ -34,9 +127,9 @@
  * Набор опций передается объектом. Заданный объект мержится с минимальным объектом опций, отдаваемых в меню по-умолчанию.
  * В качестве ключей можно использовать следующие свойства:
  * - items - для смены набора элементов.
- * - groupingKeyCallback, groupingTemplate для установки группировки.
+ * - groupingKeyCallback, groupTemplate для установки группировки.
  * - itemTemplate - шаблон элемента меню.
- * - footerTamplate - шаблон футера.
+ * - footerTemplate - шаблон футера.
  * - headerTemplate - шаблон шапки.
  */
 
@@ -49,17 +142,12 @@
 
 /**
  * @name Controls/_list/interface/IList#emptyTemplate
- * @cfg {Function} Шаблон пустого списка (без элементов).
- * См.<a href="/materials/demo-ws4-list-base">демо-пример</a>
+ * @cfg {Function} Устанавливает шаблон отображения контрола без элементов.
  * @remark
- * По умолчанию для emptyTemplate используется шаблон "Controls/list:EmptyTemplate".
- * Он рекомендован к использованию при описании собственного шаблона, отображаемого для пустого списка.
- * Шаблон "Controls/list:EmptyTemplate" принимает следующие параметры:
- * - contentTemplate — контент шаблона;
- * - topSpacing — расстояние между верхней границей и контентом шаблона;
- * - bottomSpacing — расстояние между нижней границей и контентом шаблона;
+ * См. <a href="/materials/demo-ws4-list-base">демо-пример</a>.
+ * @default Controls/list:EmptyTemplate
  * @example
- * <pre>
+ * <pre class="brush: html">
  *    <Controls.list:View>
  *       <ws:emptyTemplate>
  *          <ws:partial template="Controls/list:EmptyTemplate" topSpacing="xl" bottomSpacing="l">
@@ -128,28 +216,23 @@
 
 /**
  * @typedef {Object} ItemAction
- * @property {String} id Идентификатор операции.
- * @property {String} title Название операции.
- * @property {String} icon Иконка операции.
- * См. <a href="/docs/js/icons/">список иконок</a>.
- * @property {Number} [showType=0] Местоположение операции.
- * В свойство передается константа с соответствующим значением.
- * В значении "0" (по умолчанию) операция отображается в контекстном меню.
- * В значении "1" операция отображается в строке и в контекстном меню.
- * В значении "2" операция отображается в строке.
- * Когда в свойстве не передано значение, операция отображаются только в меню.
- * @property {String} style Стиль отображения операции над записью.
- * В свойству задают имя прикладного класса, которое в результате преобразуется в класс вида "controls-itemActionsV__action_style_имя_прикладного_класса".
- * Он будет установлен для html-контейнера самой операции над записью, а его свойства будут применены как к тексту (свойство title), так и к иконке (свойство icon).
- * См. <a href="/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/#config-style">руководство разработчика</a>.
- * @property {String} [iconStyle=default] Стиль иконки.
- * Возможные значения: default, attention, error и done.
- * См. <a href="/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/#config-style">руководство разработчика</a>.
- * @property {Function} handler Обработчик операции.
- * См. <a href="/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/#item-actions-position">пример обработчика</a>.
- * @property {String} parent Ключ родителя операции.
- * @property {boolean|null} parent@ Поле, описывающее тип узла (список, узел, скрытый узел).
- * Подробнее о различиях между типами узлов можно прочитать <a href="/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy">здесь</a>.
+ * @property {String} id Идентификатор опции записи.
+ * @property {String} title Название опции записи.
+ * @property {String} icon Имя иконки для опции записи.
+ * @property {Number} [showType=0] Местоположение опции записи.
+ * * 0 — в контекстном меню.
+ * * 1 — в строке и в контекстном меню.
+ * * 2 — в строке.
+ * @property {String} style Значение свойства преобразуется в CSS-класс вида "controls-itemActionsV__action_style_<значение_свойства>".
+ * Он будет установлен для html-контейнера самой опции записи, и свойства класса будут применены как к тексту (см. title), так и к иконке (см. icon).
+ * @property {TIconStyle} [iconStyle=default] Стиль иконки.
+ * Каждому значению свойства соответствует определённый, который определяется {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/themes/ темой оформления} приложения.
+ * @property {Function} handler Обработчик опции записи.
+ * См. {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/handler-click/ пример обработчика}.
+ * @property {String} parent Идентификатор родительской опции записи.
+ * Используется для создания {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/hierarchy/ многоуровневого контекстного меню}.
+ * @property {Boolean|null} parent@ Поле, описывающее тип узла (список, узел, скрытый узел).
+ * Подробнее о различиях между типами узлов можно прочитать {@link https://wi.sbis.ru/doc/platform/developmentapl/service-development/bd-development/vocabl/tabl/relations/#hierarchy здесь}.
  */
 
 /*
@@ -167,9 +250,17 @@
 
 /**
  * @name Controls/_list/interface/IList#itemActions
- * @cfg {Array.<ItemAction>} Конфигурация кнопок, которые будут отображаться при наведении указателя мыши на элемент.
- * <a href="/materials/demo-ws4-list-item-actions">См. демо-пример</a>.
- * Внимание: обязательно установите значение в опции <a href="/docs/js/Controls/grid/View/options/keyProperty/">keyProperty</a>, чтобы операции над записью работали корректно.
+ * @cfg {Array.<ItemAction>} Конфигурация опций записи.
+ * @remark
+ * См. <a href="/materials/demo-ws4-list-item-actions">демо-пример</a>.
+ * Для корректной работы опций записи для контрола нужно задать значение в опции {@link Controls/list:View keyProperty}.
+ * Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
+ * @see itemActionsPosition
+ * @see itemActionVisibilityCallback
+ * @see itemActionsProperty
+ * @see actionClick
+ * @see actionAlignment
+ * @see actionCaptionPosition
  */
 
 /*
@@ -180,40 +271,42 @@
 
 /**
  * @name Controls/_list/interface/IList#itemActionsPosition
- * @cfg {String} Позиция панели действий над записью в строке.
- * <a href="/materials/demo-ws4-list-item-actions">Example</a>.
- * @variant inside Панель действий над записью будет располагаться внутри строки.
- * @variant outside Панель действий над записью будет располагаться под строкой.
- * @variant custom Панель действий должна быть размещена в прикладном шаблоне itemTemplate.
- * <a href="/materials/demo-ws4-list-item-actions-custom">Example</a>.
+ * @cfg {TItemActionsPosition} Позиционирование панели с опциями записи.
+ * @remark
+ * См. <a href="/materials/demo-ws4-list-item-actions">демо-пример</a>.
+ * См. <a href="/materials/demo-ws4-list-item-actions-custom">демо-пример</a>.
+ * Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
  * @example
- * Размещаем опции записи в прикладном шаблоне с использованием itemActionsTemplate:
- *<pre>
- * <Controls.list:View
- *    itemActionsPosition="custom"
- *    itemActions="{{_itemActions}}">
+ * Размещаем опции записи в шаблоне с использованием itemActionsTemplate:
+ * <pre>
+ * <Controls.list:View itemActionsPosition="custom" itemActions="{{_itemActions}}">
  *    <ws:itemTemplate>
- *      <ws:partial template="Controls/list:ItemTemplate">
- *        <ws:contentTemplate>
- *          <ws:partial template="wml!customTemplateName"/>
- *        </ws:contentTemplate>
- *      </ws:partial>
+ *       <ws:partial template="Controls/list:ItemTemplate">
+ *          <ws:contentTemplate>
+ *             <ws:partial template="wml!customTemplateName"/>
+ *          </ws:contentTemplate>
+ *       </ws:partial>
  *    </ws:itemTemplate>
  * </Controls.list:View>
- *</pre>
+ * </pre>
  *
- * customTemplateName.wml:
  * <pre>
- *  <div>{{itemData.item.title}}</div>
+ * <!-- customTemplateName.wml -->
+ * <div>{{itemData.item.title}}</div>
  *    <ws:if data="{{!itemData.isSwiped}}">
- *      <ws:partial template="{{itemActionsTemplate}}"
+ *       <ws:partial template="{{itemActionsTemplate}}"
  *                  attr:class="some-custom-class-for-itemActions"
  *                  itemData="{{itemData}}"
  *                  scope="{{_options}}"/>
  *    </ws:if>
- *  <div>{{itemData.item.description}}</div>
+ * <div>{{itemData.item.description}}</div>
  * </pre>
- *
+ * @see itemActions
+ * @see itemActionVisibilityCallback
+ * @see itemActionsProperty
+ * @see actionClick
+ * @see actionAlignment
+ * @see actionCaptionPosition
  */
 
 /*
@@ -297,11 +390,18 @@
  */
 
 /**
- * @event Controls/_list/interface/IList#actionClick Происходит при клике на элемент панели действий над записью.
+ * @event Controls/_list/interface/IList#actionClick Происходит при клике по {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/index/ опции записи}.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
- * @param {ItemAction} action Запись, по которой был выполнен клик.
- * @param {Types/entity:Model} item Экземпляр записи, по которой был выполнен клик.
+ * @param {ItemAction} action Объект с конфигурацией опции записи, по которой выполнили клик.
+ * @param {Types/entity:Model} item Экземпляр записи, для которой была отображена опция записи.
  * @param {HTMLElement} itemContainer Контейнер записи, по которой был выполнен клик.
+ * @remark Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
+ * @see itemActions
+ * @see itemActionsPosition
+ * @see itemActionVisibilityCallback
+ * @see itemActionsProperty
+ * @see actionAlignment
+ * @see actionCaptionPosition
  */
 
 /*
@@ -314,10 +414,16 @@
 
 /**
  * @name Controls/_list/interface/IList#actionAlignment
- * @cfg {String} Устанавливает выравнивание элементов в панели действий над записью в режиме swipe.
- * <a href="/materials/demo-ws4-swipe">Example</a>.
- * @variant horizontal Элементы будут выровнены по горизонтали.
- * @variant vertical Элементы будут выровнены по вертикали.
+ * @cfg {TActionAlignment} Устанавливает выравнивание опций записи, когда они отображаются в режиме swipe.
+ * @remark
+ * См. <a href="/materials/demo-ws4-swipe">демо-пример</a>.
+ * Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
+ * @see itemActions
+ * @see itemActionsPosition
+ * @see itemActionVisibilityCallback
+ * @see itemActionsProperty
+ * @see actionClick
+ * @see actionCaptionPosition
  */
 
 /*
@@ -330,11 +436,16 @@
 
 /**
  * @name Controls/_list/interface/IList#actionCaptionPosition
- * @cfg {String} Позиция заголовка в панели действий над записью в режиме swipe.
- * <a href="/materials/demo-ws4-swipe">Example</a>.
- * @variant right Заголовок будет отображаться справа от иконки действия.
- * @variant bottom Заголовок будет отображаться под иконкой действия.
- * @variant none Заголовок не будет отображаться.
+ * @cfg {TActionCaptionPosition} Позиция заголовка для опций записи, когда они отображаются в режиме swipe.
+ * @remark
+ * См. <a href="/materials/demo-ws4-swipe">демо-пример</a>.
+ * Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
+ * @see itemActions
+ * @see itemActionsPosition
+ * @see itemActionVisibilityCallback
+ * @see itemActionsProperty
+ * @see actionClick
+ * @see actionAlignment
  */
 
 /*
@@ -348,14 +459,15 @@
 
 /**
  * @name Controls/_list/interface/IList#itemActionVisibilityCallback
- * @cfg {Function} Функция обратного вызова для определения видимости элементов в панели действий над записью.
+ * @cfg {Function} Функция обратного вызова для определения видимости опций записи.
  * @remark
  * Функция принимает два аргумента:
- * <ol>
- *    <li>action — объект с конфигурацией конкретной операции. Свойства объекта описаны <a href="/docs/js/Controls/list/IList/typedefs/ItemAction/">здесь</a>.</li>
- *    <li>item — модель (см. {@link Types/entity:Model}), содержащая данные записи. </li>
- * </ol>
- * Для видимости элемента, из функции следует вернуть true.
+ * 
+ * * action — объект с конфигурацией опции записи.
+ * * item — модель (см. {@link Types/entity:Model}), содержащая данные записи.
+ *
+ * Чтобы опция записи отображалась, из функции следует вернуть true.
+ * Подробнее о работе с опциями записи читайте [@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
  * @example
  * Режим "Чтение" недоступен, если запись имеет свойство isNew === false.
  * WML:
@@ -382,6 +494,12 @@
  *  }
  *  ...
  * </pre>
+ * @see itemActions
+ * @see itemActionsPosition
+ * @see actionCaptionPosition
+ * @see itemActionsProperty
+ * @see actionClick
+ * @see actionAlignment
  */
 
 /*
@@ -417,7 +535,17 @@
 
 /**
  * @name Controls/_list/interface/IList#itemActionsProperty
- * @cfg {String} Имя свойства, содержащего конфигурацию панели действий над записью для текущей строки.
+ * @cfg {String} Имя свойства, которое содержит конфигурацию для панели с опциями записи.
+ * @remark
+ * Функционал используют в тех случаях, когда опции записи привязаны к отображаемым данным.
+ * Настройка для опций записи извлекается из данных самого элемента.
+ * Подробнее о работе с опциями записи читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/list/item-actions/ здесь}.
+ * @see itemActions
+ * @see itemActionsPosition
+ * @see actionCaptionPosition
+ * @see itemActionVisibilityCallback
+ * @see actionClick
+ * @see actionAlignment
  */
 
 /*
@@ -459,7 +587,7 @@
 
 /**
  * @name Controls/_list/interface/IList#uniqueKeys
- * @cfg {String} Определяет стратегию вставки элементов при загрузке с дублирующимися идентификаторами.
+ * @cfg {Boolean} Определяет стратегию вставки элементов при загрузке с дублирующимися идентификаторами.
  * @remark
  * true - Merge, элементы с одинаковым идентификатором будут объединены в один.
  * false - Add, элементы с одинаковым идентификатором будут объединены в один.
@@ -467,7 +595,7 @@
 
 /*
  * @name Controls/_list/interface/IList#uniqueKeys
- * @cfg {String} Strategy for loading new list items.
+ * @cfg {Boolean} Strategy for loading new list items.
  * @remark
  * true - Merge, items with the same identifier will be combined into one.
  * false - Add, items with the same identifier will be shown in the list.
@@ -475,42 +603,46 @@
 
 /**
  * @name Controls/_list/interface/IList#itemsReadyCallback
- * @cfg {Function} Функция обратного вызова, которая будет вызываться, когда экземпляр данных списка готов.
+ * @cfg {Function} Устанавливает функцию, которая вызывается, когда экземпляр данных получен из источника и подготовлен к дальнейшей обработке контролом.
+ * Функция вызывается единожды в рамках {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/ui-library/control/#life-cycle-phases жизненного цикла} на этапе mount.
  * @remark
- * ARGUMENTS:
- * <ul>
- * <li>items {@link Types/collection:RecordSet RecordSet} с загруженными данными</li>
- * </ul>
- * На этом этапе можно сохранить ссылку на items, чтобы была возможноть потом менять их по ней
+ * Единственный аргумент функции — **items** с типом данных {@link Types/collection:RecordSet}, где содержатся загруженные данные.
  * @example
+ * В качестве примера используем функцию для того, чтобы сохранить ссылку на items, чтобы иметь возможноcть изменять items далее.
+ * <pre class="brush:html">
+ * <Controls.list:View itemsReadyCallback="{{_myItemsReadyCallback}}" />
+ * </pre>
  * <pre class="brush:js">
  * _myItemsReadyCallback = function(items) {
  *    this._myItems = items;
  * }
- * ...
+ * </pre>
+ * <pre class="brush:js">
  * deleteButtonClickHandler: function{
  *    this._myItems.removeAt(0);
  * }
  * </pre>
+ * @see dataLoadCallback
  */
 
 /**
  * @name Controls/_list/interface/IList#dataLoadCallback
- * @cfg {Function} Функция обратного вызова, которая будет вызываться, когда данные загружены источником.
+ * @cfg {Function} Устанавливает функцию, которая вызывается каждый раз непосредственно после загрузки данных из источника контрола.
+ * Функцию можно использовать для изменения данных еще до того, как они будут отображены в контроле.
  * @remark
- * ARGUMENTS:
- * <ul>
- * <li>items {@link Types/collection:RecordSet RecordSet} с загруженными данными</li>
- * </ul>
- * dataLoadCallback может использоваться для изменения данных еще до того, как он будут отображены.
+ * Единственный аргумент функции — **items** с типом данных {@link Types/collection:RecordSet}, где содержатся загруженные данные.
  * @example
+ * <pre class="brush:html">
+ * <Controls.list:View dataLoadCallback="{{_myDataLoadCallback}}" />
+ * </pre>
  * <pre class="brush:js">
  * _myDataLoadCallback = function(items) {
- *    items.each(function(item){
+ *    items.each(function(item) {
  *       item.set(field, value);
  *    });
  * }
  * </pre>
+ * @see itemsReadyCallback
  */
 
 /**
@@ -541,7 +673,10 @@
 
 /**
  * Перезагружает данные из источника данных.
- * @function Controls/_list/interface/IList#reload
+ * При перезагрузке в фильтр уходит список развернутых узлов (с целью восстановить пользователю структуру, которая была до перезагрузки).
+ * В дальнейшем также планируется передавать навигацию, в настоящее время этот функционал в разработке.
+ * @function
+ * @name Controls/_list/interface/IList#reload
  */
 
 /*
@@ -628,6 +763,28 @@
  */
 
 /**
+ * @event Controls/_list/interface/IList#itemMouseDown Происходит в момент нажатия на кнопку мыши над элементом списка.
+ * @param {Vdom/Vdom:SyntheticEvent} event Объект события.
+ * @param {Types/entity:Record} item Элемент, над которым произошло нажатие на кнопку мыши.
+ * @param {Object} nativeEvent Объект нативного события браузера.
+ * @remark
+ * От события itemClick данное событие отличается следующим:
+ * 1. Срабатывает при нажатии на любую кнопку мыши (левую, правую, среднюю);
+ * 2. Срабатывает в момент нажатия кнопки (itemClick срабатывает уже после её отпускания).
+ */
+
+ /*
+ * @event Controls/_list/interface/IList#itemClick Occurs when a mouse button is pressed over a list item.
+ * @param {Vdom/Vdom:SyntheticEvent} event Event object.
+ * @param {Types/entity:Record} item Item that the mouse button was pressed over.
+ * @param {Object} nativeEvent Native event object.
+ * @remark
+ * From the itemClick event this event differs in the following:
+ * 1. It works when you click on any mouse button (left, right, middle);
+ * 2. It works when the button is down (itemClick fires after it is released).
+ */
+
+/**
  * @event Controls/_list/interface/IList#itemSwipe Происходит при жесте "swipe" на элементе списка.
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Types/entity:Model} item Экземпляр элемента списка, по которому производим swipe.
@@ -651,6 +808,15 @@
  * @param {Vdom/Vdom:SyntheticEvent} eventObject Дескриптор события.
  * @param {Types/entity:Model} item Экземпляр элемента, на который наводим курсор.
  * @param {HTMLElement} itemContainer Контейнер элемента.
+ */
+
+/**
+ * @event Controls/_list/interface/IList#activeElementChanged Происходит при смене активного элемента в процессе скроллирования
+ * @param {Vdom/Vdom:SyntheticEvent<Event>} event Дескриптор события
+ * @param {string} key Ключ активного элемента
+ * @remark Активным элементом считается последний элемент, который находится выше середины вьюпорта.
+ * Для высчитывания активного элемента в списочном контроле должен быть включен виртуальный скроллинг.
+ * @see shouldCheckActiveElement
  */
 
 /*
@@ -751,3 +917,16 @@
  * @name Controls/_list/interface/IList#itemPadding
  */
 
+/**
+ * @typedef {Object} SelectionStrategy
+ * @property {String} name Класс со стратегией выбора.
+ * @property {Object} options Опции для стратегии выбора.
+ */
+
+/**
+ * @name Controls/_list/interface/IList#selectionStrategy
+ * @cfg {SelectionStrategy} Стратегия выбора задает логику поведения при отметке записей в режиме множественого выбора.
+ * @remark Опция актуальна только при multiSelectVisibility: true.
+ * @default Controls/operations:FlatSelectionStrategy
+ * @see Controls/operations:TreeSelectionStrategy
+ */

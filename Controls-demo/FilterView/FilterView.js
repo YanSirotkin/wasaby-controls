@@ -70,6 +70,7 @@ define('Controls-demo/FilterView/FilterView',
          _navigation: null,
          _itemsMore: null,
          _buttonItems: null,
+         _buttonItemsWithoutResetValue: null,
          _fastButtonItems: null,
          _fastButtonItems2: null,
          _oneFastItems: null,
@@ -436,6 +437,8 @@ define('Controls-demo/FilterView/FilterView',
                   ]
                })}
             ];
+            this._buttonItemsWithoutResetValue = Clone(this._buttonItems);
+            this._buttonItemsWithoutResetValue.forEach(function (item) {delete item.resetValue;});
             this._fastButtonItems = [
                {
                   name: 'date',
@@ -528,6 +531,24 @@ define('Controls-demo/FilterView/FilterView',
                {name: 'tagging', value: false, resetValue: false, textValue: 'Marks', viewMode: 'extended', visibility: false}
             ].concat(this._buttonItems);
             this._fastButtonItems2 = Clone(this._fastButtonItems);
+            this._fastButtonItems2.push({
+               name: 'detailingPeriod',
+               value: [1],
+               resetValue: [1],
+               textValue: '',
+               viewMode: 'extended',
+               visibility: false,
+               source: new sourceLib.Memory({
+                  keyProperty: 'key',
+                  data: [
+                     { key: 1, title: 'On documents', 'parent@': false, parent: null },
+                     { key: 2, title: 'Summary', 'parent@': true, parent: null },
+                     { key: 3, title: 'Day', text: 'Summary by day', parent: 2, 'parent@': false },
+                     { key: 4, title: 'Month', text: 'Summary by monthly', parent: 2, 'parent@': false },
+                     { key: 5, title: 'Year', text: 'Summary by year', parent: 2, 'parent@': false }
+                  ]
+               })
+            });
             this._oneFastItems = [
                { name: 'acting',
                   value: '1',
@@ -600,6 +621,12 @@ define('Controls-demo/FilterView/FilterView',
             ];
          },
 
+         _beforeUnmount: function() {
+            this._hierarchyItems.forEach( function(item) {
+               item.editorOptions.source.destroyHistory();
+            });
+         },
+
          _getMultiItems: function() {
             var items = [];
             for (var i = 0; i < 100; i++) {
@@ -610,14 +637,6 @@ define('Controls-demo/FilterView/FilterView',
 
          _itemsChanged: function(event, items) {
             this._hierarchyItems = Clone(items);
-         },
-
-         _itemsMoreChanged: function(event, items) {
-            this._itemsMore = Clone(items);
-            this._itemsMore[0].editorOptions.source = new sourceLib.Memory({
-               idProperty: 'id',
-               data: this._itemsMultiSelect
-            });
          }
       });
 

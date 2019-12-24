@@ -1,10 +1,11 @@
+import rk = require('i18n!Controls');
 /// <amd-module name='Controls/_popupConfirmation/Opener/Dialog' />
 // @ts-ignore
 import { Converter as MarkupConverter } from 'Controls/decorator';
 // @ts-ignore
 import * as Control from 'Core/Control';
 // @ts-ignore
-import { constants, IoC } from 'Env/Env';
+import { constants } from 'Env/Env';
 // @ts-ignore
 import entity = require('Types/entity');
 // @ts-ignore
@@ -18,6 +19,7 @@ import detailsTemplate = require('wml!Controls/_popupConfirmation/Opener/Dialog/
 // @ts-ignore
 import template = require('wml!Controls/_popupConfirmation/Opener/Dialog/Dialog');
 
+import {Logger} from 'UI/Utils';
 
 /**
  * Класс контрола "Окно подтверждения". В зависимости от типа, может быть диалогом подтверждения, с кнопками "Да", "Нет" и "Отмена" (опционально), или диалогом с кнопкой "Ок".
@@ -124,24 +126,12 @@ var Submit = Control.extend({
       if (event.nativeEvent.keyCode === constants.key.esc) {
          this._isEscDown = true;
       }
-
-      //TODO Пришлось скопировать обработчик для _keyDown из Controls/_form/PrimaryAction, чтобы разорвать зацикливание.
-      // Controls/dataSource -> Controls/popupTemplate -> Controls/form -> Controls/dataSource
-      if (!(event.nativeEvent.altKey || event.nativeEvent.shiftKey) &&
-         (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey) &&
-         event.nativeEvent.keyCode === constants.key.enter) { // Ctrl+Enter, Cmd+Enter, Win+Enter
-
-         // If "primary action" processed event, then event must be stopped.
-         // Otherwise, parental controls (including other primary action) can react to pressing ctrl+enter and call one more handler
-         event.stopPropagation();
-         this._notify('triggered');
-      }
    },
 
    _keyPressed: function (e) {
       /**
        * Старая панель по событию keydown закрывается и блокирует всплытие события. Новая панель делает
-       * тоже самое, но по событию keyup. Из-за этого возникает следующая ошибка.
+       * то же самое, но по событию keyup. Из-за этого возникает следующая ошибка.
        * https://online.sbis.ru/opendoc.html?guid=0e4a5c02-f64c-4c7d-88b8-3ab200655c27
        *
        * Что бы не трогать старые окна, мы добавляем поведение на закрытие по esc. Закрываем только в том случае,
@@ -154,7 +144,7 @@ var Submit = Control.extend({
    },
    _getMessage: function () {
       if (this._hasMarkup()) {
-         IoC.resolve('ILogger').error('Confirmation', 'В тексте сообщения присутствует ссылка. Вывод html-тегов должен реализовываться через задание шаблона.');
+         Logger.error('Confirmation: В тексте сообщения присутствует ссылка. Вывод html-тегов должен реализовываться через задание шаблона.', this);
          return MarkupConverter.htmlToJson('<span>' + this._options.message + '</span>');
       }
       return this._options.message;

@@ -2,7 +2,6 @@ import {date as formatDate} from 'Types/formatter';
 import {Date as WSDate} from 'Types/entity';
 import {debounce} from 'Types/function';
 import {Base as BaseSource} from 'Types/source';
-import {IoC} from 'Env/Env';
 import {SyntheticEvent} from 'Vdom/Vdom';
 import {Control, TemplateFunction, IControlOptions} from 'UI/Base';
 import {IMonthListSource, IMonthListSourceOptions} from './interfaces/IMonthListSource';
@@ -21,6 +20,7 @@ import template = require('wml!Controls/_calendar/MonthList/MonthList');
 import monthTemplate = require('wml!Controls/_calendar/MonthList/MonthTemplate');
 import yearTemplate = require('wml!Controls/_calendar/MonthList/YearTemplate');
 import stubTemplate = require('wml!Controls/_calendar/MonthList/Stub');
+import {Logger} from 'UI/Utils';
 
 
 
@@ -83,7 +83,7 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
     protected _beforeMount(options: IModuleComponentOptions): void {
         const position = options.startPosition || options.position || new WSDate();
         if (options.startPosition) {
-            IoC.resolve('ILogger').warn('MonthList', 'Используется устаревшая опция startPosition, используйте опцию position');
+            Logger.warn('MonthList: Используется устаревшая опция startPosition, используйте опцию position', this);
         }
 
         this._enrichItemsDebounced = debounce(this._enrichItems, 150);
@@ -98,9 +98,6 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
     }
 
     protected _afterMount(): void {
-        // TODO: We need another api to control the shadow visibility
-        // https://online.sbis.ru/opendoc.html?guid=1737a12a-9dd1-45fa-a70c-bc0c9aa40a3d
-        this._children.scroll.setShadowMode({ top: 'visible', bottom: 'visible' });
         this._updateScrollAfterViewModification();
     }
 
@@ -123,6 +120,7 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
             }
 
         }
+
     }
 
     protected _afterUpdate(oldOptions?: IModuleComponentOptions, oldContext?: any): void {
@@ -178,7 +176,8 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
                 header: Boolean(this._itemHeaderTemplate),
                 dateConstructor: options.dateConstructor,
                 displayedRanges: options.displayedRanges,
-                viewMode: options.viewMode
+                viewMode: options.viewMode,
+                order: options.order
             });
         }
         if (!oldOptions || options.viewMode !== oldOptions.viewMode || options.source !== oldOptions.source) {
@@ -206,17 +205,19 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
         const newPosition = dateUtils.getStartOfMonth(position);
 
         this._positionToScroll = newPosition;
+        this._lastNotifiedPositionChangedDate = newPosition;
 
         if (this._container && this._canScroll(newPosition)) {
             // Update scroll position without waiting view modification
             this._updateScrollAfterViewModification();
         } else {
             this._displayedDates = [];
+            const oldPositionId = this._startPositionId;
             this._startPositionId = monthListUtils.dateToId(this._normalizeStartPosition(position));
             // After changing the navigation options, we must call the "reload" to redraw the control,
             // because the last time we could start rendering from the same position.
             // Position option is the initial position from which control is initially drawn.
-            if (this._children.months) {
+            if (oldPositionId === this._startPositionId && this._children.months) {
                 this._children.months.reload();
             }
         }
@@ -252,7 +253,7 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
             // We select only those containers that are not fully displayed
             // and intersect with the scrolled container in its upper part, or lie higher.
             if (entry.nativeEntry.boundingClientRect.top - entry.nativeEntry.rootBounds.top <= 0) {
-                if (entry.nativeEntry.boundingClientRect.bottom - entry.nativeEntry.rootBounds.top >= 0) {
+                if (entry.nativeEntry.boundingClientRect.bottom - entry.nativeEntry.rootBounds.top > 0) {
                     // If the bottom of the container lies at or below the top of the scrolled container, then we found the right date
                     date = entryDate;
                     break;
@@ -262,10 +263,11 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
                     // We save the date, and check the following. This condition branch is needed,
                     // because a situation is possible when the container partially intersected from above, climbed up,
                     // persecuted, and the lower container approached the upper edge and its intersection did not change.
+                    const delta: number = this._options.order === 'asc' ? 1 : -1;
                     if (this._options.viewMode === 'year') {
-                        date = new this._options.dateConstructor(entryDate.getFullYear() + 1, entryDate.getMonth());
+                        date = new this._options.dateConstructor(entryDate.getFullYear() + delta, entryDate.getMonth());
                     } else {
-                        date = new this._options.dateConstructor(entryDate.getFullYear(), entryDate.getMonth() + 1);
+                        date = new this._options.dateConstructor(entryDate.getFullYear(), entryDate.getMonth() + delta);
                     }
                 }
             }
@@ -428,6 +430,7 @@ class  ModuleComponent extends Control<IModuleComponentOptions> implements
             // Draw the elements above and below.
             virtualPageSize: 6,
             _limit: 8,
+            order: 'asc',
             dateConstructor: WSDate,
             displayedRanges: null
         };

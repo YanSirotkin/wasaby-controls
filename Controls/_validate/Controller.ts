@@ -1,7 +1,7 @@
 import {Control, IControlOptions, TemplateFunction} from 'UI/Base';
 import template = require('wml!Controls/_validate/Controller');
 import ValidateContainer = require('wml!Controls/_validate/Container');
-import {IoC} from 'Env/Env';
+import {Logger} from 'UI/Utils';
 import {IValidateConfig} from 'Controls/_validate/Container';
 
 interface IValidateResult {
@@ -12,12 +12,12 @@ interface IValidateResult {
 
 /**
  * Контрол, регулирующий валидацию формы.
- * Валидация запускается при вызове метода submit ({@link Controls/_validate/FormController#submit})
+ * Валидация запускается при вызове метода {@link Controls/_validate/FormController#submit submit}.
  * @class Controls/_validate/Controller
  * @extends Core/Control
  * @control
  * @public
- * @demo Controls-demo/Input/Validate/Controller
+ * @demo Controls-demo/Input/Validate/FormController
  * @author Красильников А.С.
  */
 
@@ -74,7 +74,7 @@ class Form extends Control<IControlOptions> {
             this._validates.reverse();
             return results;
         }).catch((e: Error) => {
-            IoC.resolve('ILogger').error('Form', 'Submit error', e);
+            Logger.error('Form: Submit error', this, e);
             return e;
         });
     }

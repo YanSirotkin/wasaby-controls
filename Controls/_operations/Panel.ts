@@ -8,6 +8,7 @@ import template = require('wml!Controls/_operations/Panel/Panel');
  *
  * @class Controls/_operations/Panel
  * @extends Core/Control
+ * @mixes Controls/_toolbars/IToolbarSource
  * @mixes Controls/_interface/ISource
  * @mixes Controls/interface/IItemTemplate
  * @mixes Controls/_interface/IHierarchy
@@ -107,6 +108,25 @@ import template = require('wml!Controls/_operations/Panel/Panel');
  *             this._moveItems();
  *             break;
  *    }
+ * </pre>
+ */
+
+/**
+ * @name Controls/_operations/Panel#selectionViewMode
+ * @cfg {Enum} Задает отображение кнопки "Показать отмеченные" в меню мультивыбора.
+ * @variant null Кпопка скрыта
+ * @variant all Кнопка "Показать отмеченные"
+ * @variant selected Кнопка "Показать все"
+ * @default null
+ * @example
+ * <pre>
+ *    Control.extend({
+ *       _selectionViewMode: 'all'
+ *       ...
+ *    });
+ * </pre>
+ * <pre>
+ *    <Controls.operationsPanel:OperationsPanel bind:selectionViewMode="_selectionViewMode"/>
  * </pre>
  */
 

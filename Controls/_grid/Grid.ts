@@ -1,12 +1,10 @@
-import {View as List} from 'Controls/list';
+import {ListControl as viewTemplate, View as List} from 'Controls/list';
 import GridViewModel = require('Controls/_grid/GridViewModel');
 import viewName = require('Controls/_grid/GridView');
-import {ListControl as viewTemplate} from 'Controls/list';
 
 
-
-   /**
-    * Табличное представление. Может загружать данные из источника данных.
+/**
+    * Контрол «Таблица». Может загружать данные из источника данных.
     * Подробное описание и инструкции по настройке контрола можно найти <a href='https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list/'>здесь</a>.
     * <a href="/materials/demo-ws4-edit-in-place">Демо-пример</a>.
     *
@@ -14,8 +12,8 @@ import {ListControl as viewTemplate} from 'Controls/list';
     * @extends Controls/list:View
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/IPromisedSelectable
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_grid/interface/IGridControl
@@ -54,8 +52,8 @@ import {ListControl as viewTemplate} from 'Controls/list';
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IGroupedGrid
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/ISorting

@@ -1,3 +1,4 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
 import template = require('wml!Controls/_dropdown/Input/Input');
 import defaultContentTemplate = require('wml!Controls/_dropdown/Input/resources/defaultContentTemplate');
@@ -56,10 +57,10 @@ var _private = {
  *
  * @class Controls/_dropdown/Input
  * @extends Core/Control
- * @mixes Controls/_interface/ISource
+ * @mixes Controls/_dropdown/interface/IDropdownSource
  * @mixes Controls/_interface/IHierarchy
- * @mixes Controls/interface/IFilter
- * @mixes Controls/interface/INavigation
+ * @mixes Controls/_interface/IFilter
+ * @mixes Controls/_interface/INavigation
  * @mixes Controls/Input/interface/IValidation
  * @mixes Controls/_interface/IMultiSelectable
  * @mixes Controls/_dropdown/interface/IFooterTemplate
@@ -87,8 +88,8 @@ var _private = {
  * @extends Core/Control
  * @mixes Controls/_interface/ISource
  * @mixes Controls/_interface/IHierarchy
- * @mixes Controls/interface/IFilter
- * @mixes Controls/interface/INavigation
+ * @mixes Controls/_interface/IFilter
+ * @mixes Controls/_interface/INavigation
  * @mixes Controls/Input/interface/IValidation
  * @mixes Controls/_interface/IMultiSelectable
  * @mixes Controls/_dropdown/interface/IFooterTemplate

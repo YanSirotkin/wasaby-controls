@@ -10,12 +10,9 @@ define('Controls-demo/List/Grid/GridWithEditing', [
    'wml!Controls-demo/List/Grid/DemoBalancePrice',
    'wml!Controls-demo/List/Grid/DemoCostPrice',
    'wml!Controls-demo/List/Grid/DemoHeaderCostPrice',
-
-   'Controls/Render/Money/Money',
    'css!Controls-demo/List/Grid/Grid',
    'Controls/scroll',
    'Controls/grid',
-   'Controls/Render/Money/Money'
 ], function(Env, BaseControl, GridData, template, source, cClone) {
    'use strict';
    var ModuleClass = BaseControl.extend({
@@ -96,12 +93,14 @@ define('Controls-demo/List/Grid/GridWithEditing', [
                displayProperty: 'price',
                width: 'auto',
                align: 'right',
+               compatibleWidth: '39px',
                template: 'wml!Controls-demo/List/Grid/DemoCostPrice'
             },
             {
                displayProperty: 'balance',
                width: 'auto',
                align: 'right',
+               compatibleWidth: '62px',
                template: 'wml!Controls-demo/List/Grid/DemoBalancePrice'
             },
             {
@@ -114,11 +113,13 @@ define('Controls-demo/List/Grid/GridWithEditing', [
                displayProperty: 'costPrice',
                width: 'auto',
                align: 'right',
+               compatibleWidth: '67px',
                template: 'wml!Controls-demo/List/Grid/DemoCostPrice'
             },
             {
                displayProperty: 'balanceCostSumm',
                width: 'auto',
+               compatibleWidth: '95px',
                align: 'right',
                template: 'wml!Controls-demo/List/Grid/DemoCostPrice'
             }

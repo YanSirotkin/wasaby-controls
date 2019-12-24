@@ -6,12 +6,11 @@
  * @includes _Controller Controls/_dropdown/_Controller
  * @includes Opener Controls/_dropdown/Opener
  * @includes Combobox Controls/_dropdown/ComboBox
- * @includes ItemTemplate Controls/_dropdown/itemTemplate
+ * @includes ItemTemplate Controls/dropdown:ItemTemplate
+ * @includes IDropdownSource Controls/_dropdown/interface/IDropdownSource
  * @includes IFooterTemplate Controls/_dropdown/interface/IFooterTemplate
  * @includes IGrouped Controls/_dropdown/interface/IGrouped
  * @includes IHeaderTemplate Controls/_dropdown/interface/IHeaderTemplate
- * @includes MenuStyles Controls/_dropdown/Button/MenuStyles
- * @includes Styles Controls/_dropdown/Input/Styles
  * @includes inputDefaultContentTemplate wml!Controls/_dropdown/Input/resources/defaultContentTemplate
  * @public
  * @author Крайнов Д.О.
@@ -25,12 +24,11 @@
  * @includes _Controller Controls/_dropdown/_Controller
  * @includes Opener Controls/_dropdown/Opener
  * @includes Combobox Controls/_dropdown/ComboBox
- * @includes ItemTemplate Controls/_dropdown/itemTemplate
+ * @includes ItemTemplate Controls/dropdown:ItemTemplate
+ * @includes IDropdownSource Controls/_dropdown/interface/IDropdownSource
  * @includes IFooterTemplate Controls/_dropdown/interface/IFooterTemplate
  * @includes IGrouped Controls/_dropdown/interface/IGrouped
  * @includes IHeaderTemplate Controls/_dropdown/interface/IHeaderTemplate
- * @includes MenuStyles Controls/_dropdown/Button/MenuStyles
- * @includes Styles Controls/_dropdown/Input/Styles
  * @includes inputDefaultContentTemplate wml!Controls/_dropdown/Input/resources/defaultContentTemplate
  * @public
  * @author Крайнов Д.О.
@@ -47,6 +45,8 @@ import MenuUtils = require('Controls/_dropdown/Button/MenuUtils');
 import dropdownHistoryUtils = require('Controls/_dropdown/dropdownHistoryUtils');
 import inputDefaultContentTemplate = require('wml!Controls/_dropdown/Input/resources/defaultContentTemplate');
 import defaultContentTemplateWithIcon = require('wml!Controls/_dropdown/Input/resources/defaultContentTemplateWithIcon');
+
+export {default as IGrouped, IGroupedOptions} from 'Controls/_dropdown/interface/IGrouped';
 
 export {
     Button,

@@ -29,6 +29,15 @@
     <div class="controlsDemo__cell">
         <Router.router:Reference attr:class="controls-text-label_theme-{{_options.theme}}"
                                  state="/Controls-demo/app/:app"
+                                 app="{{ 'Controls-demo/treeGrid/Mover/Index' }}">
+            <a href="{{content.href}}">Перемещение</a>
+        </Router.router:Reference>
+        <Controls-demo.treeGrid.Mover.Index/>
+    </div>
+
+    <div class="controlsDemo__cell">
+        <Router.router:Reference attr:class="controls-text-label_theme-{{_options.theme}}"
+                                 state="/Controls-demo/app/:app"
                                  app="{{ 'Controls-demo/treeGrid/MultiSelect/Index' }}">
             <a href="{{content.href}}">Множественный выбор</a>
         </Router.router:Reference>
@@ -133,5 +142,32 @@
             <a href="{{content.href}}">Виртуальный скролл</a>
         </Router.router:Reference>
         <Controls-demo.treeGrid.VirtualScroll.Index/>
+    </div>
+
+    <div class="controlsDemo__cell">
+        <Router.router:Reference attr:class="controls-text-label_theme-{{_options.theme}}"
+                                 state="/Controls-demo/app/:app"
+                                 app="{{ 'Controls-demo/treeGrid/CellPadding/Index' }}">
+            <a href="{{content.href}}">Отсупы в ячейках</a>
+        </Router.router:Reference>
+        <Controls-demo.treeGrid.CellPadding.Index/>
+    </div>
+
+    <div class="controlsDemo__cell">
+        <Router.router:Reference attr:class="controls-text-label_theme-{{_options.theme}}"
+                                 state="/Controls-demo/app/:app"
+                                 app="{{ 'Controls-demo/treeGrid/LoadMore/Index' }}">
+            <a href="{{content.href}}">Load More</a>
+        </Router.router:Reference>
+        <Controls-demo.treeGrid.LoadMore.Index/>
+    </div>
+
+    <div class="controlsDemo__cell">
+        <Router.router:Reference attr:class="controls-text-label_theme-{{_options.theme}}"
+                                 state="/Controls-demo/app/:app"
+                                 app="{{ 'Controls-demo/treeGrid/DragNDrop/Index' }}">
+            <a href="{{content.href}}">DragNDrop</a>
+        </Router.router:Reference>
+        <Controls-demo.treeGrid.DragNDrop.Index/>
     </div>
 </div>

@@ -1,8 +1,9 @@
+import rk = require('i18n!Controls');
 import {descriptor} from 'Types/entity';
 import dateControlsUtils from './../Utils';
 
 /**
- * mixin Controls/_dateRange/interfaces/IPeriodLiteDialog
+ * @mixin Controls/_dateRange/interfaces/IPeriodLiteDialog
  * @public
  */
 
@@ -76,6 +77,11 @@ export default {
              */
             emptyCaption: undefined,
 
+            /**
+             * @name Controls/dateLitePopup/IDateLitePopup#popupClassName
+             * @cfg {String} Класс, который навешивается на всплывающее окно.
+             */
+            popupClassName: undefined,
             // TODO: Доделать полноценную поддержку следующих опций. Пока не показываем их в документации.
             /**
              * @name Controls/_dateRange/interfaces/IPeriodLiteDialog#checkedStart

@@ -8,7 +8,7 @@ define('Controls-demo/Index', [
    'Application/Env',
    'Core/Deferred',
    'css!Controls-demo/Demo/Page',
-   'css!Controls-theme/themes/default/helpers/AreaBlocks'
+   'css!SBIS3.CONTROLS/themes/AreaBlocks'
 ], function (BaseControl,
              template,
              AppInit,
@@ -30,18 +30,25 @@ define('Controls-demo/Index', [
             this._title = this._getTitle();
             this._settigsController = {
                getSettings: function(ids) {
-                  var storage = {};
-                  storage[ids[0]] = 1000;
-                  if (ids[0] === 'master111') {
-                     storage[ids[0]] = 300;
+                  var storage = window && JSON.parse(window.localStorage.getItem('controlSettingsStorage')) || {};
+                  var controlId = ids[0];
+                  if (!storage[controlId]) {
+                     storage[controlId] = 1000;
+                     if (controlId === 'master111') {
+                        storage[controlId] = 300;
+                     }
                   }
                   return (new Deferred()).callback(storage);
                },
                setSettings: function(settings) {
+                  window.localStorage.setItem('controlSettingsStorage', JSON.stringify(settings));
                   //'Сохранили панель с шириной ' + settings['123']
                   //'Сохранили masterDetail с шириной ' + settings['master111']
                }
             };
+         },
+         _afterMount: function() {
+            window.localStorage.setItem('controlSettingsStorage', JSON.stringify({}));
          },
          _getTitle: function() {
             var location = this._getLocation();

@@ -1,17 +1,15 @@
 import BaseControl = require('Core/Control');
-import coreMerge = require('Core/core-merge');
 import ILinkView from './interfaces/ILinkView';
-import IRangeSelectable from './interfaces/IInputSelectable';
 import componentTmpl = require('wml!Controls/_dateRange/Link/Link');
 import 'css!theme?Controls/dateRange';
-
+import getOptions from 'Controls/Utils/datePopupUtils';
 /**
  * Controls that allows user to select date value in calendar.
  *
  * @class Controls/_dateRange/Link
  * @extends Core/Control
+ * @mixes Controls/interface/IInputDateTime
  * @mixes Controls/interface/ILinkView
- * @mixes Controls/_dateRange/interfaces/IInputSelectable
  * @control
  * @public
  * @category Input
@@ -26,29 +24,19 @@ var Component = BaseControl.extend({
    _openDialog: function(event) {
       const container = this._children.linkView.getDialogTarget();
       var cfg = {
-         opener: this,
+         ...getOptions.getCommonOptions(this),
          target: container,
          template: 'Controls/datePopup',
          className: 'controls-PeriodDialog__picker',
-         horizontalAlign: { side: 'right' },
-         targetPoint: { horizontal: 'left' },
-         eventHandlers: {
-            onResult: this._onResult.bind(this)
-         },
          templateOptions: {
-            startValue: this._options.value,
-            endValue: this._options.value,
+            ...getOptions.getTemplateOptions(this),
             headerType: 'link',
             closeButtonEnabled: true,
             rangeselect: false,
+            range: this._options.range,
             quantum: null
          }
       };
-      if (!this._options.vdomDialog) {
-         cfg.template = 'SBIS3.CONTROLS/Date/RangeBigChoose';
-         cfg.isCompoundTemplate = true;
-         cfg.templateOptions.handlers = { onChoose: this._onResultWS3.bind(this) };
-      }
       this._children.opener.open(cfg);
    },
    _onResultWS3: function(event, startValue) {
@@ -67,13 +55,11 @@ var Component = BaseControl.extend({
 Component.EMPTY_CAPTIONS = ILinkView.EMPTY_CAPTIONS;
 
 Component.getDefaultOptions = function() {
-   return coreMerge(coreMerge({
-      vdomDialog: true
-   }, IRangeSelectable.getDefaultOptions()), ILinkView.getDefaultOptions());
+   return ILinkView.getDefaultOptions();
 };
 
 Component.getOptionTypes = function() {
-   return coreMerge(coreMerge({}, IRangeSelectable.getOptionTypes()), ILinkView.getOptionTypes());
+   return ILinkView.getOptionTypes();
 };
 
 export default Component;

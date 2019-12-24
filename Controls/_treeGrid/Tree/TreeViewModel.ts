@@ -2,7 +2,6 @@ import {ListViewModel, ItemsUtil, TreeItemsUtil} from 'Controls/list';
 import cClone = require('Core/core-clone');
 import _entity = require('Types/entity');
 import collection = require('Types/collection');
-import ArraySimpleValuesUtil = require('Controls/Utils/ArraySimpleValuesUtil');
 import {isEqual} from 'Types/object';
 import {TemplateFunction} from 'UI/Base';
 
@@ -741,8 +740,8 @@ var
                 this._options.hasChildrenProperty = hasChildrenProperty;
             }
         },
-        getChildren: function(rootId) {
-            return this._hierarchyRelation.getChildren(rootId, this._items);
+        getChildren: function(rootId, items) {
+            return this._hierarchyRelation.getChildren(rootId, items || this._items);
         }
     });
 

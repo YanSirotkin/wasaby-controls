@@ -5,7 +5,7 @@ import TreeGridView = require('Controls/_treeGrid/TreeGridView/TreeGridView');
 import TreeControl = require('Controls/_treeGrid/TreeControl');
 
 
-   /**
+/**
     * Контрол "Дерево".
     * @remark
     * Дополнительно о контроле:
@@ -20,8 +20,8 @@ import TreeControl = require('Controls/_treeGrid/TreeControl');
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IGroupedGrid
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/IHierarchy
@@ -66,8 +66,8 @@ import TreeControl = require('Controls/_treeGrid/TreeControl');
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IGroupedGrid
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/ISorting

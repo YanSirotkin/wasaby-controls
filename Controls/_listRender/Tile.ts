@@ -89,7 +89,7 @@ export default class TileRender extends BaseRender {
     }
 
     protected _onItemMouseMove(e: SyntheticEvent<MouseEvent>, item: TileCollectionItem<unknown>): void {
-        if (!item.isFixed() && !this._context.isTouch.isTouch /* && !this._listModel.getDragEntity() */) {
+        if (!item.isFixed() && this._shouldProcessHover() /* && !this._listModel.getDragEntity() */) {
             // TODO Might be inefficient, can get called multiple times per hover. Should
             // be called immediately before or after the hovered item is set in the model,
             // but then we can't get the hover target element.
@@ -101,7 +101,7 @@ export default class TileRender extends BaseRender {
 
     protected _onItemMouseEnter(e: SyntheticEvent<MouseEvent>, item: TileCollectionItem<unknown>): void {
         super._onItemMouseEnter(e, item);
-        if (!this._context.isTouch.isTouch) {
+        if (this._shouldProcessHover()) {
             this._debouncedSetHoveredItem(item);
         }
     }
@@ -125,7 +125,7 @@ export default class TileRender extends BaseRender {
 
         const viewContainer = this._options.tileScalingMode === 'inside'
             ? this.getItemsContainer()
-            : document.documentElement;
+            : document && document.documentElement;
         const viewContainerRect = viewContainer.getBoundingClientRect();
 
         const targetItemSize = this._options.listModel.getItemContainerSize(itemContainer);
@@ -135,7 +135,7 @@ export default class TileRender extends BaseRender {
             viewContainerRect
         );
 
-        const documentRect = document.documentElement.getBoundingClientRect();
+        const documentRect = document && document.documentElement.getBoundingClientRect();
         const targetItemPositionInDocument = this._options.listModel.getItemContainerPositionInDocument(
             targetItemPosition,
             viewContainerRect,
@@ -181,6 +181,13 @@ export default class TileRender extends BaseRender {
         ) {
             this._options.listModel.setHoveredItem(item);
         }
+    }
+
+    private _shouldProcessHover(): boolean {
+        return (
+            !this._context.isTouch.isTouch &&
+            !document.body.classList.contains('ws-is-drag')
+        );
     }
 
     static contextTypes() {

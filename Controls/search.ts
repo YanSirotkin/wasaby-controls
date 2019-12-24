@@ -1,12 +1,12 @@
 /**
  * Библиотека контролов, которые служат для организации поиска в списках.
+ * Подробнее об организации поиска и фильтрации данных в реестре {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/ здесь}.
  * @library Controls/search
  * @includes InputContainer Controls/_search/Input/Container
  * @includes Misspell Controls/_search/Misspell
  * @includes MisspellContainer Controls/_search/Misspell/Container
  * @includes Controller Controls/_search/Controller
  * @includes Input Controls/_search/Input/Search
- * @includes Styles Controls/_search/Styles
  * @public
  * @author Крайнов Д.О.
  */
@@ -19,12 +19,10 @@
  * @includes MisspellContainer Controls/_search/Misspell/Container
  * @includes Controller Controls/_search/Controller
  * @includes Input Controls/_search/Input/Search
- * @includes Styles Controls/_search/Styles
  * @public
  * @author Крайнов Д.О.
  */
 
-import 'i18n!Controls/search';
 import {default as Misspell} from 'Controls/_search/Misspell';
 import {default as FilterController} from 'Controls/_search/FilterController';
 import InputContainer = require('Controls/_search/Input/Container');

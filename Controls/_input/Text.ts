@@ -1,7 +1,7 @@
-import Env = require('Env/Env');
 import Base = require('Controls/_input/Base');
 import entity = require('Types/entity');
 import ViewModel = require('Controls/_input/Text/ViewModel');
+import {Logger} from 'UI/Utils';
 
 
 /**
@@ -15,13 +15,7 @@ import ViewModel = require('Controls/_input/Text/ViewModel');
  * @mixes Controls/_input/interface/IText
  *
  * @public
- * @demo Controls-demo/Input/SizesAndHeights/Index
- * @demo Controls-demo/Input/FontStyles/Index
- * @demo Controls-demo/Input/TextAlignments/Index
- * @demo Controls-demo/Input/TagStyles/Index
- * @demo Controls-demo/Input/ValidationStatuses/Index
- * @demo Controls-demo/Input/SelectOnClick/Index
- * @demo Controls-demo/Input/Text/Index
+ * @demo Controls-demo/Input/Text/Base/Index
  *
  * @author Красильников А.С.
  */
@@ -29,7 +23,7 @@ import ViewModel = require('Controls/_input/Text/ViewModel');
 var _private = {
     validateConstraint: function (constraint) {
         if (constraint && !/^\[[\s\S]+?\]$/.test(constraint)) {
-            Env.IoC.resolve('ILogger').error('Controls/_input/Text', 'The constraint options are not set correctly. More on https://wi.sbis.ru/docs/js/Controls/_input/Text/options/constraint/');
+            Logger.error('Controls/_input/Text', 'The constraint options are not set correctly. More on https://wi.sbis.ru/docs/js/Controls/_input/Text/options/constraint/');
             return false;
         }
 

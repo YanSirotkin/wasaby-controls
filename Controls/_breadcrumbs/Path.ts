@@ -6,16 +6,17 @@ import template = require('wml!Controls/_breadcrumbs/Path/Path');
 
 /**
  * Хлебные крошки.
- * <a href="/materials/demo-ws4-breadcrumbs">Демо-пример</a>.
- *
+ * @remark
+ * См. <a href="/materials/demo-ws4-breadcrumbs">демо-пример</a>.
+ * Подробнее о работе с контролом читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/content-managment/bread-crumbs/ здесь}.
  * @class Controls/_breadcrumbs/Path
  * @extends Core/Control
  * @mixes Controls/interface/IBreadCrumbs
- * @mixes Controls/_breadcrumbs/BreadCrumbsStyles
  * @control
  * @public
  * @author Авраменко А.С.
  * @demo Controls-demo/BreadCrumbs/BreadCrumbsPG
+ * @see Controls/_breadcrumbs/HeadingPath
  */
 
 /*
@@ -27,7 +28,7 @@ import template = require('wml!Controls/_breadcrumbs/Path/Path');
  * @mixes Controls/interface/IBreadCrumbs
  * @mixes Controls/_breadcrumbs/BreadCrumbsStyles
  * @control
- * @public
+ * @private
  * @author Авраменко А.С.
  * @demo Controls-demo/BreadCrumbs/BreadCrumbsPG
  */
@@ -35,49 +36,35 @@ import template = require('wml!Controls/_breadcrumbs/Path/Path');
 var BreadCrumbs = Control.extend({
     _template: template,
     _visibleItems: [],
-    _oldWidth: 0,
     _viewUpdated: false,
 
     _afterMount: function () {
-        this._notify('register', ['controlResize', this, this._onResize], {bubbling: true});
         if (this._options.items && this._options.items.length > 0) {
-            this._oldWidth = this._container.clientWidth;
             FontLoadUtil.waitForFontLoad('controls-BreadCrumbsView__crumbMeasurer').addCallback(function () {
-                BreadCrumbsUtil.calculateBreadCrumbsToDraw(this, this._options.items, this._oldWidth);
-                this._forceUpdate();
+                BreadCrumbsUtil.drawBreadCrumbs(this, this._options.items);
             }.bind(this));
         }
     },
-
     _beforeUpdate: function (newOptions) {
         this._redrawIfNeed(this._options.items, newOptions.items);
     },
     _redrawIfNeed: function(currentItems, newItems) {
-        if (BreadCrumbsUtil.shouldRedraw(currentItems, newItems, this._oldWidth, this._container.clientWidth, this._container)) {
-            this._oldWidth = this._container.clientWidth;
-            BreadCrumbsUtil.calculateBreadCrumbsToDraw(this, newItems, this._container.clientWidth);
+        if (BreadCrumbsUtil.shouldRedraw(currentItems, newItems)) {
+            BreadCrumbsUtil.drawBreadCrumbs(this, newItems);
             this._viewUpdated = true;
         }
-    }
+    },
 
     _afterUpdate: function() {
         if (this._viewUpdated) {
             this._viewUpdated = false;
-            this._notify('controlResize', [], {bubbling: true});
         }
-    }
+    },
     _notifyHandler: tmplNotify,
     _itemClickHandler: function(e, item) {
         e.stopPropagation();
         this._notify('itemClick', [item])
-    },
-    _onResize: function() {
-        this._redrawIfNeed(this._options.items, this._options.items);
-    },
-
-   _beforeUnmount: function() {
-      this._notify('unregister', ['controlResize', this], { bubbling: true });
-   }
+    }
 });
 
 BreadCrumbs.getDefaultOptions = function () {

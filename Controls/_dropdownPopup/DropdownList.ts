@@ -1,5 +1,7 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
-import Env = require('Env/Env');
+import {Logger} from 'UI/Utils';
+import {isEqual} from 'Types/object';
 import MenuItemsTpl = require('wml!Controls/_dropdownPopup/DropdownList');
 import DropdownViewModel = require('Controls/_dropdownPopup/DropdownViewModel');
 import groupTemplate = require('wml!Controls/_dropdownPopup/defaultGroupTemplate');
@@ -18,20 +20,20 @@ import {SyntheticEvent} from 'Vdom/Vdom'
       //Popup/Opener method "open" is called on every "mouseenter" event on item with hierarchy.
       var SUB_DROPDOWN_OPEN_DELAY = 100;
       var _private = {
-         checkDeprecated: function(cfg) {
+         checkDeprecated: function(cfg, self) {
             if (cfg.groupMethod) {
-               Env.IoC.resolve('ILogger').warn('IGrouped', 'Option "groupMethod" is deprecated and removed in 19.200. Use option "groupingKeyCallback".');
+               Logger.warn('IGrouped: Option "groupMethod" is deprecated and removed in 19.200. Use option "groupingKeyCallback".', self);
             }
          },
-         setPopupOptions: function(self, horizontalAlign, theme) {
-            var align = horizontalAlign || 'right';
+         setPopupOptions: function(self, horizontalPosition, theme) {
+            var align = horizontalPosition || 'right';
             self._popupOptions = {
                className: 'controls-DropdownList__subMenu controls-DropdownList__subMenu_margin theme_' + theme,
 
                // submenu doesn't catch focus, because parent menu can accept click => submenu will deactivating and closing
                autofocus: false,
-               horizontalAlign: {
-                  side: align
+               direction: {
+                  horizontal: align
                },
                targetPoint: {
                   horizontal: align
@@ -39,8 +41,8 @@ import {SyntheticEvent} from 'Vdom/Vdom'
             };
          },
 
-         getDropdownClass: function(verticalAlign, typeShadow) {
-            return 'controls-DropdownList__popup-' + verticalAlign.side +
+         getDropdownClass: function(verticalPosition, typeShadow) {
+            return 'controls-DropdownList__popup-' + verticalPosition +
                ' controls-DropdownList__popup-shadow-' + typeShadow;
          },
 
@@ -51,8 +53,8 @@ import {SyntheticEvent} from 'Vdom/Vdom'
                   targetPoint: {
                      horizontal: 'right'
                   },
-                  horizontalAlign: {
-                     side: 'right'
+                  direction: {
+                     horizontal: 'right'
                   }
                };
             }
@@ -93,7 +95,7 @@ import {SyntheticEvent} from 'Vdom/Vdom'
                   hasIconPin: options.hasIconPin
                },
                targetPoint: subMenuPosition.targetPoint,
-               horizontalAlign: subMenuPosition.horizontalAlign,
+               direction: subMenuPosition.direction,
                target: event.target
             };
          },
@@ -123,10 +125,9 @@ import {SyntheticEvent} from 'Vdom/Vdom'
          },
 
          isNeedUpdateSelectedKeys: function(self, target, item) {
-            var clickOnEmptyItem = item.get(self._options.keyProperty) === null,
-               clickOnCheckBox = target.closest('.controls-DropdownList__row-checkbox'),
-               hasSelection = self._listModel.getSelectedKeys().length && self._listModel.getSelectedKeys()[0] !== null;
-            return self._options.multiSelect && !clickOnEmptyItem && (hasSelection || clickOnCheckBox);
+            const clickOnEmptyItem = item.get(self._options.keyProperty) === null,
+               clickOnCheckBox = target.closest('.controls-DropdownList__row-checkbox');
+            return self._options.multiSelect && !clickOnEmptyItem && (self._selectionChanged || clickOnCheckBox);
          },
 
          getRootKey: function(key) {
@@ -197,9 +198,10 @@ import {SyntheticEvent} from 'Vdom/Vdom'
          _hasHierarchy: false,
          _listModel: null,
          _subDropdownItem: null,
+         _selectionChanged: false,
 
          _beforeMount: function(newOptions) {
-            _private.checkDeprecated(newOptions);
+            _private.checkDeprecated(newOptions, this);
             if (newOptions.items) {
                this._listModel = new DropdownViewModel({
                   items: newOptions.items,
@@ -253,10 +255,10 @@ import {SyntheticEvent} from 'Vdom/Vdom'
                _private.prepareHeaderConfig(this, newOptions);
             }
 
-            if (newOptions.stickyPosition.horizontalAlign &&
-               (!this._popupOptions || this._popupOptions.horizontalAlign !== newOptions.stickyPosition.horizontalAlign)) {
-               this._dropdownClass = _private.getDropdownClass(newOptions.stickyPosition.verticalAlign, newOptions.typeShadow);
-               _private.setPopupOptions(this, newOptions.stickyPosition.horizontalAlign.side, newOptions.theme);
+            if (newOptions.stickyPosition.direction &&
+               (!this._popupOptions || this._popupOptions.direction !== newOptions.stickyPosition.direction)) {
+               this._dropdownClass = _private.getDropdownClass(newOptions.stickyPosition.direction.vertical, newOptions.typeShadow);
+               _private.setPopupOptions(this, newOptions.stickyPosition.direction.horizontal, newOptions.theme);
             }
          },
 
@@ -300,7 +302,7 @@ import {SyntheticEvent} from 'Vdom/Vdom'
             }
          },
 
-         _mouseenterHandler: function() {
+         _closeSubMenu: function() {
             if (this._hasHierarchy) {
                this._children.subDropdownOpener.close();
             }
@@ -329,6 +331,7 @@ import {SyntheticEvent} from 'Vdom/Vdom'
                return;
             }
             if (this._listModel.getSelectedKeys() && _private.isNeedUpdateSelectedKeys(this, event.target, item)) {
+               this._selectionChanged = true;
                let isApplyButtonVisible = this._needShowApplyButton;
                let self = this;
 

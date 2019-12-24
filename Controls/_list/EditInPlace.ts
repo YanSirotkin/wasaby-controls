@@ -21,6 +21,7 @@ var
     ],
     _private = {
         beginEdit: function (self, options, isAdd) {
+            _private.registerPending(self);
             var result = self._notify('beforeBeginEdit', [options, !!isAdd]);
             if (!isAdd) {
                 self._originalItem = options.item;
@@ -178,6 +179,10 @@ var
                 self._editingItem.unsubscribe('onPropertyChange', self._resetValidation);
                 self._options.listModel.unsubscribe('onCollectionChange', self._updateIndex);
             }
+            if (self._pendingDeferred && !self._pendingDeferred.isReady()) {
+                self._pendingDeferred.callback();
+            }
+            self._pendingDeferred = null;
             self._originalItem = null;
             self._editingItem = null;
             self._isAdd = null;
@@ -286,6 +291,18 @@ var
                 parentId = editingItem.get(listModel._options.parentProperty);
                 parentIndex = listModel.getIndexBySourceItem(listModel.getItemById(parentId, listModel._options.keyProperty).getContents());
                 index = parentIndex + (defaultIndex !== undefined ? defaultIndex : listModel.getChildren(parentId).length) + 1;
+            } else if (listModel._options.groupingKeyCallback) {
+                const groupId = listModel._options.groupingKeyCallback(editingItem);
+                const isAddInTop = self._options.editingConfig && self._options.editingConfig.addPosition === 'top';
+                let renderNearItem;
+
+                const groupItems = listModel.getDisplay().getGroupItems(groupId);
+                if (typeof groupId === 'undefined' || groupItems.length === 0) {
+                    renderNearItem = isAddInTop ? listModel.getDisplay().getFirst() : listModel.getDisplay().getLast();
+                } else {
+                    renderNearItem = groupItems[isAddInTop ? 0 : groupItems.length - 1];
+                }
+                index = listModel.getDisplay().getIndex(renderNearItem);
             }
 
             return index;
@@ -311,6 +328,14 @@ var
                 return Deferred.success({cancelled: true});
             }
             return _private.afterBeginEdit(self, newOptions);
+        },
+        registerPending(self): void {
+            if (!self._pendingDeferred || self._pendingDeferred.isReady()) {
+                self._pendingDeferred = new Deferred();
+            }
+            self._notify('registerPending', [self._pendingDeferred, {
+                onPendingFail: self._onPendingFail
+            }], {bubbling: true});
         }
     };
 
@@ -329,6 +354,8 @@ var EditInPlace = Control.extend(/** @lends Controls/_list/EditInPlace.prototype
     _originalItem: null,
     _editingItem: null,
     _endEditDeferred: null,
+    _pendingDeferred: null,
+
 
     constructor: function (options = {}) {
         EditInPlace.superclass.constructor.apply(this, arguments);
@@ -345,6 +372,7 @@ var EditInPlace = Control.extend(/** @lends Controls/_list/EditInPlace.prototype
              */
             this._children.formController.setValidationResult();
         }.bind(this);
+        this._onPendingFail = this._onPendingFail.bind(this);
         this._updateIndex = this._updateIndex.bind(this);
         this.__errorController = options.errorController || new dataSourceError.Controller({});
     },
@@ -368,7 +396,6 @@ var EditInPlace = Control.extend(/** @lends Controls/_list/EditInPlace.prototype
 
     beginEdit(options): Promise<{ cancelled: true } | { item: entity.Record } | void> {
         var self = this;
-
         if (this._editingItem && !this._editingItem.isChanged()) {
             return this.cancelEdit().addCallback(() => {
                 return _private.beginEdit(self, options).addCallback((newOptions) => {
@@ -633,6 +660,20 @@ var EditInPlace = Control.extend(/** @lends Controls/_list/EditInPlace.prototype
             _private.editNextRow(this, !eventOptions.isShiftKey);
         }
         e.stopPropagation();
+    },
+
+    _onPendingFail(forceFinishValue: boolean, pendingDeferred: Promise<boolean>): void {
+        const cancelPending = () => this._notify('cancelFinishingPending', [], {bubbling: true});
+
+        this.commitEdit().addCallback((result = {}) => {
+            if (result.validationFailed) {
+                cancelPending();
+            } else {
+                pendingDeferred.callback();
+            }
+        }).addErrback(() => {
+            cancelPending();
+        });
     },
 
     _beforeUnmount: function () {

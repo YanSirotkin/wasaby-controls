@@ -1,19 +1,20 @@
 import Control = require('Core/Control');
 import template = require('wml!Controls/_explorer/View/View');
-import {SearchGridViewModel, ViewModel as TreeGridViewModel, TreeGridView, SearchView} from 'Controls/treeGrid';
 import tmplNotify = require('Controls/Utils/tmplNotify');
 import applyHighlighter = require('Controls/Utils/applyHighlighter');
-import {factory} from 'Types/chain';
 import cInstance = require('Core/core-instance');
-import {IoC, constants} from 'Env/Env';
 import keysHandler = require('Controls/Utils/keysHandler');
 import randomId = require('Core/helpers/Number/randomId');
+import {SearchGridViewModel, SearchView, TreeGridView, ViewModel as TreeGridViewModel} from 'Controls/treeGrid';
+import {factory} from 'Types/chain';
+import {constants} from 'Env/Env';
+import {Logger} from 'UI/Utils';
 import 'css!theme?Controls/explorer';
 import 'css!theme?Controls/tile';
 import 'Types/entity';
 
 
-   var
+var
       HOT_KEYS = {
          backByPath: constants.key.backspace
       };
@@ -42,7 +43,7 @@ import 'Types/entity';
             }
             self._notify('rootChanged', [root]);
             if (typeof self._options.itemOpenHandler === 'function') {
-               self._options.itemOpenHandler(root);
+               self._options.itemOpenHandler(root, self._items);
             }
             self._forceUpdate();
          },
@@ -90,24 +91,22 @@ import 'Types/entity';
             }
          },
          getRoot: function(self, newRoot) {
-            return typeof newRoot !== "undefined" ? newRoot : self._root;
+            return typeof newRoot !== 'undefined' ? newRoot : self._root;
          },
+         getPath(data) {
+             const path = data && data.getMetaData().path;
+             let breadCrumbs;
 
-         getPath: function(data) {
-            let path = data.getMetaData().path;
-            let breadCrumbs;
-
-            if (path && path.getCount() > 0) {
-               breadCrumbs = factory(path).toArray();
-            } else {
-               breadCrumbs = null;
-            }
-
-            return breadCrumbs;
+             if (path && path.getCount() > 0) {
+                 breadCrumbs = factory(path).toArray();
+             } else {
+                 breadCrumbs = null;
+             }
+             return breadCrumbs;
          },
-         serviceDataLoadCallback: function(self, data) {
-             self._breadCrumbsItems = _private.getPath(data);
-             self._forceUpdate();
+         serviceDataLoadCallback: function(self, oldData, newData) {
+            self._breadCrumbsItems = _private.getPath(newData);
+            _private.updateSubscriptionOnBreadcrumbs(oldData, newData, self._updateHeadingPath);
          },
          itemsReadyCallback: function(self, items) {
             self._items = items;
@@ -155,7 +154,7 @@ import 'Types/entity';
             }
 
             if (!VIEW_MODEL_CONSTRUCTORS[viewMode]) {
-               result = _private.loadTileViewMode().then(() => {
+               result = _private.loadTileViewMode(self).then(() => {
                   _private.setViewModeSync(self, viewMode, cfg);
                });
             } else {
@@ -197,19 +196,33 @@ import 'Types/entity';
 
             return itemFromRoot;
          },
-         loadTileViewMode: function () {
+         loadTileViewMode: function (self) {
             return new Promise((resolve) => {
                import('Controls/tile').then((tile) => {
                   VIEW_NAMES.tile = tile.TreeView;
                   VIEW_MODEL_CONSTRUCTORS.tile = tile.TreeViewModel;
                   resolve(tile);
                }).catch((err) => {
-                  IoC.resolve('ILogger').error('Controls/_explorer/View', err);
+                  Logger.error('Controls/_explorer/View: ' + err.message, self, err);
                });
             });
          },
          canStartDragNDrop(self): boolean {
             return self._viewMode !== 'search';
+         },
+         updateSubscriptionOnBreadcrumbs(oldItems, newItems, updateHeadingPathCallback): void {
+            const getPathRecordSet = (items) => items && items.getMetaData() && items.getMetaData().path;
+            const oldPath = getPathRecordSet(oldItems);
+            const newPath = getPathRecordSet(newItems);
+
+            if (oldItems !== newItems || oldPath !== newPath) {
+               if (oldPath && oldPath.getCount) {
+                  oldPath.unsubscribe('onCollectionItemChange', updateHeadingPathCallback);
+               }
+               if (newPath && newPath.getCount) {
+                  newPath.subscribe('onCollectionItemChange', updateHeadingPathCallback);
+               }
+            }
          }
       };
 
@@ -226,14 +239,15 @@ import 'Types/entity';
     *
     * @class Controls/_explorer/View
     * @extends Core/Control
+    * @implements Controls/_interface/IErrorController
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/ITreeGridItemTemplate
     * @mixes Controls/interface/IItemTemplate
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IEditableList
     * @mixes Controls/interface/IGroupedList
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/IHierarchy
@@ -258,14 +272,15 @@ import 'Types/entity';
     *
     * @class Controls/_explorer/View
     * @extends Core/Control
+    * @implements Controls/_interface/IErrorController
     * @mixes Controls/_interface/ISource
     * @mixes Controls/interface/ITreeGridItemTemplate
     * @mixes Controls/interface/IItemTemplate
     * @mixes Controls/interface/IPromisedSelectable
     * @mixes Controls/interface/IEditableList
     * @mixes Controls/interface/IGroupedList
-    * @mixes Controls/interface/INavigation
-    * @mixes Controls/interface/IFilter
+    * @mixes Controls/_interface/INavigation
+    * @mixes Controls/_interface/IFilter
     * @mixes Controls/interface/IHighlighter
     * @mixes Controls/_list/interface/IList
     * @mixes Controls/_interface/ISorting
@@ -325,13 +340,8 @@ import 'Types/entity';
          this._itemsReadyCallback = _private.itemsReadyCallback.bind(null, this);
          this._itemsSetCallback = _private.itemsSetCallback.bind(null, this);
          this._canStartDragNDrop = _private.canStartDragNDrop.bind(null, this);
-
+         this._updateHeadingPath = this._updateHeadingPath.bind(this);
          this._breadCrumbsDragHighlighter = this._dragHighlighter.bind(this);
-         //process items from options to create a path
-         //will be refactor after new scheme of a data receiving
-         if (cfg.items) {
-            this._breadCrumbsItems = _private.getPath(cfg.items);
-         }
 
          const root = _private.getRoot(this, cfg.root);
          this._restoredMarkedKeys = {
@@ -352,7 +362,9 @@ import 'Types/entity';
 
          if (this._viewMode !== cfg.viewMode) {
             _private.setViewMode(this, cfg.viewMode, cfg);
-            this._children.treeControl.resetExpandedItems();
+            if (cfg.searchNavigationMode !== 'expand') {
+               this._children.treeControl.resetExpandedItems();
+            }
          }
          if (cfg.virtualScrolling !== this._options.virtualScrolling) {
             _private.setVirtualScrolling(this, this._viewMode, cfg);
@@ -412,6 +424,9 @@ import 'Types/entity';
       },
       _onExplorerKeyDown: function(event) {
          keysHandler(event, HOT_KEYS, _private, this);
+      },
+      _updateHeadingPath() {
+          this._breadCrumbsItems = _private.getPath(this._items);
       },
       scrollToItem(key: string|number, toBottom: boolean): void {
          this._children.treeControl.scrollToItem(key, toBottom);

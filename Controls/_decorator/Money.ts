@@ -1,86 +1,17 @@
-import Env = require('Env/Env');
-import Control = require('Core/Control');
-import entity = require('Types/entity');
-import splitIntoTriads = require('Controls/Utils/splitIntoTriads');
-import template = require('wml!Controls/_decorator/Money/Money');
+import {Control, IControlOptions, TemplateFunction} from 'UI/Base';
+import {INumberFormatOptions, INumberFormat, ITooltipOptions, ITooltip} from 'Controls/interface';
+import {Logger} from 'UI/Utils';
+import {descriptor} from 'Types/entity';
+import {moneyOptions, moneyUseGrouping, moneyValue} from 'Controls/_decorator/ActualAPI';
+import numberToString from 'Controls/Utils/Formatting/numberToString';
+import splitIntoTriads from 'Controls/Utils/splitIntoTriads';
+//@ts-ignore
+import * as template from 'wml!Controls/_decorator/Money/Money';
 
+type TValue = string | number | null;
 /**
- * Преобразует число в денежный формат.
- *
- * @class Controls/_decorator/Money
- * @extends Core/Control
- *
- * @mixes Controls/_decorator/Money/Styles
- * @mixes Controls/_interface/INumberFormat
- *
- * @public
- * @demo Controls-demo/Decorators/Money/Money
- * @demo Controls-demo/Decorator/Money/Styles/Index
- *
- * @author Красильников А.С.
- */
-
-/*
- * Converts a number to money.
- *
- * @class Controls/_decorator/Money
- * @extends Core/Control
- *
- * @mixes Controls/_decorator/Money/Styles
- * @mixes Controls/_interface/INumberFormat
- *
- * @public
- * @demo Controls-demo/Decorators/Money/Money
- *
- * @author Красильников А.С.
- */
-
-/*
- * @name Controls/_decorator/Money#number
- * @cfg {Number} Number to convert.
- * @deprecated Use option {@link value}
- */
-
-/**
- * @name Controls/_decorator/Money#value
- * @cfg {String|Number} Значение в числовом формате для преобразования.
- */
-
-/*
- * @name Controls/_decorator/Money#value
- * @cfg {String|Number} Value in number format to convert.
- */
-
-/*
- * @name Controls/_decorator/Money#delimiters
- * @cfg {Boolean} Determines whether the number should be split into triads.
- * @default false
- * @remark
- * true - the number split into triads.
- * false - does not do anything.
- * @deprecated Use option {@link Controls/input:Number#useGrouping}
- */
-
-
-/**
- * @name Controls/_decorator/Money#style
- * @cfg {String} Стиль отображения числа в денежном формате. Посмотреть демо-пример можно в описании контрола Money.
- * @variant accentResults Акцентированная сумма в строке Итоги.
- * @variant noAccentResults Не акцентная сумма в строке Итоги.
- * @variant group Сумма в группировке.
- * @variant basicRegistry Основная сумма в реестре.
- * @variant noBasicRegistry Не основная сумма в реестре.
- * @variant accentRegistry Акцентная сумма в реестре.
- * @variant noAccentRegistry Не акцентная сумма в реестре.
- * @variant error Ошибка.
- * @variant default По умолчанию.
- * @default default
- * @demo Controls-demo/Decorator/Money/Styles/Index
- */
-
-/*
- * @name Controls/_decorator/Money#style
- * @cfg {String} The type with which you want to display money.
+ * @typedef TStyle
+ * @variant default
  * @variant accentResults
  * @variant noAccentResults
  * @variant group
@@ -89,114 +20,207 @@ import template = require('wml!Controls/_decorator/Money/Money');
  * @variant accentRegistry
  * @variant noAccentRegistry
  * @variant error
- * @variant default
- * @default default
  */
+type TStyle =
+    'default'
+    | 'accentResults'
+    | 'noAccentResults'
+    | 'group'
+    | 'basicRegistry'
+    | 'noBasicRegistry'
+    | 'accentRegistry'
+    | 'noAccentRegistry'
+    | 'error';
 
-var _private = {
-   searchPaths: /(-?[0-9]*?)(\.[0-9]{2})/,
+interface IPaths {
+    integer: string;
+    fraction: string;
+    number: string;
+}
 
-   parseNumber: function (value, delimiters) {
-      var exec = this.searchPaths.exec(parseFloat(value).toFixed(2));
+/**
+ * @interface Controls/_decorator/Money/IMoneyOptions
+ * @public
+ * @author Красильников А.С.
+ */
+export interface IMoneyOptions extends IControlOptions, INumberFormatOptions, ITooltipOptions {
+    /**
+     * Опция устарела, используйте опцию {@link value}.
+     * @deprecated
+     */
+    number: number;
+    /**
+     * Опция устарела, используйте опцию {@link useGrouping}.
+     * @deprecated
+     */
+    delimiters: boolean;
+    /**
+     * Опция устарела, используйте опцию {@link tooltip}.
+     * @deprecated
+     */
+    title: string;
+    /**
+     * Декорируемое число.
+     * @type string|number|null
+     * @default null
+     * @demo Controls-demo/Decorator/Money/Value/Index
+     */
+    value: TValue;
+    /**
+     * Стиль отображения числа в денежном формате.
+     * @type TStyle
+     * @default default
+     * @demo Controls-demo/Decorator/Money/Style/Index
+     */
+    style: TStyle;
+}
 
-      if (!exec) {
-         Env.IoC.resolve('ILogger').error('Controls/_decorator/Money', 'That is not a valid option value: ' + value + '.');
-         exec = ['0.00', '0', '.00'];
-      }
+/**
+ * Графический контрол, декорирующий число таким образом, что оно приводится к денежному формату.
+ * Денежным форматом является число с неограниченной целой частью, и двумя знаками в дробной части.
+ *
+ * @class Controls/_decorator/Money
+ * @extends UI/Base:Control
+ *
+ * @mixes Controls/interface:ITooltip
+ * @mixes Controls/interface:INumberFormat
+ * @mixes Controls/_decorator/Money/IMoneyOptions
+ *
+ * @public
+ * @demo Controls-demo/Decorator/Money/Index
+ *
+ * @author Красильников А.С.
+ */
+class Money extends Control<IMoneyOptions> implements INumberFormat, ITooltip {
+    private _value: TValue;
+    private _useGrouping: boolean;
+    private _tooltip: string;
+    private _parsedNumber: IPaths;
 
-      var integer = delimiters ? splitIntoTriads(exec[1]) : exec[1];
-      var fraction = exec[2];
+    readonly '[Controls/_interface/ITooltip]' = true;
+    readonly '[Controls/_interface/INumberFormat]' = true;
 
-      return {
-         integer: integer,
-         fraction: fraction,
-         number: integer + fraction
-      };
-   },
+    protected _options: IMoneyOptions;
+    protected _template: TemplateFunction = template;
 
-   isUseGrouping: function (options, useLogging) {
-      if ('delimiters' in options) {
-         if (useLogging) {
-            Env.IoC.resolve('ILogger').warn('Controls/_decorator/Money', 'Опция delimiters устарела, используйте useGrouping.');
-         }
+    // Used in template
+    private _isDisplayFractionPath(value: string, showEmptyDecimals: boolean): boolean {
+        return showEmptyDecimals || value !== '.00';
+    }
 
-         return options.delimiters;
-      }
+    private _getTooltip(options: IMoneyOptions): string {
+        const actualOptions = moneyOptions(options);
 
-      return options.useGrouping;
-   },
+        if (actualOptions.hasOwnProperty('tooltip')) {
+            return actualOptions.tooltip;
+        }
 
-   getValue: function (options, useLogging) {
-      if ('number' in options) {
-         if (useLogging) {
-            Env.IoC.resolve('ILogger').warn('Controls/_decorator/Money', 'Опция number устарела, используйте value.');
-         }
+        return this._parsedNumber.number;
+    }
 
-         return options.number.toString();
-      }
+    private _changeState(options: IMoneyOptions, useLogging: boolean): boolean {
+        const value = moneyValue(options.number, options.value, useLogging);
+        const useGrouping = moneyUseGrouping(options.delimiters, options.useGrouping, useLogging);
 
-      return options.value;
-   },
+        if (this._value !== value || this._useGrouping !== useGrouping) {
+            this._value = value;
+            this._useGrouping = useGrouping;
 
-   getTitle: function(options, value) {
-      if (options.hasOwnProperty('title')) {
-         return options.title;
-      }
+            return true;
+        }
 
-      return value;
-   }
-};
+        return false;
+    }
 
-var Money = Control.extend({
-   _template: template,
+    private _parseNumber(): IPaths {
+        const value = Money.toFormat(Money.toString(this._value));
+        let exec: RegExpExecArray | string[] = Money.SEARCH_PATHS.exec(value);
 
-   _parsedNumber: null,
+        if (!exec) {
+            Logger.error('Controls/_decorator/Money: That is not a valid option value: ' + this._value + '.', this);
+            exec = ['0.00', '0', '.00'];
+        }
 
-   _title: null,
+        const integer = this._useGrouping ? splitIntoTriads(exec[1]) : exec[1];
+        const fraction = exec[2];
 
-   _beforeMount: function (options) {
-      this._parsedNumber = _private.parseNumber(
-         _private.getValue(options, true),
-         _private.isUseGrouping(options, true)
-      );
-      this._title = _private.getTitle(options, this._parsedNumber.number);
-   },
+        return {
+            integer: integer,
+            fraction: fraction,
+            number: integer + fraction
+        };
+    }
 
-   _beforeUpdate: function (newOptions) {
-      var newUseGrouping = _private.isUseGrouping(newOptions, false);
-      var oldUseGrouping = _private.isUseGrouping(this._options, false);
-      var newValue = _private.getValue(newOptions, false);
-      var oldValue = _private.getValue(this._options, false);
+    protected _beforeMount(options: IMoneyOptions): void {
+        this._changeState(options, true);
+        this._parsedNumber = this._parseNumber();
+        this._tooltip = this._getTooltip(options);
+    }
 
-      if (newValue !== oldValue || newUseGrouping !== oldUseGrouping) {
-         this._parsedNumber = _private.parseNumber(newValue, newUseGrouping);
-      }
-      this._title = _private.getTitle(newOptions, this._parsedNumber.number);
-   },
+    protected _beforeUpdate(newOptions): void {
+        if (this._changeState(newOptions, false)) {
+            this._parsedNumber = this._parseNumber();
+        }
+        this._tooltip = this._getTooltip(newOptions);
+    }
 
-   _isDisplayFractionPath: function(value, showEmptyDecimals) {
-      return showEmptyDecimals || value !== '.00';
-   }
-});
+    private static FRACTION_LENGTH = 2;
+    private static ZERO_FRACTION_PATH = '0'.repeat(Money.FRACTION_LENGTH);
+    private static SEARCH_PATHS = new RegExp(`(-?[0-9]*?)(\\.[0-9]{${Money.FRACTION_LENGTH}})`);
 
-Money.getDefaultOptions = function () {
-   return {
-      style: 'default',
-      useGrouping: true,
-      showEmptyDecimals: true
-   };
-};
+    private static toString(value: TValue): string {
+        if (value === null) {
+            return '0.' + Money.ZERO_FRACTION_PATH;
+        }
+        if (typeof value === 'number') {
+            return numberToString(value);
+        }
 
-Money.getOptionTypes = function () {
-   return {
-      style: entity.descriptor(String),
-      useGrouping: entity.descriptor(Boolean),
-      value: entity.descriptor(String, Number)
-   };
-};
+        return value;
+    }
 
-Money._theme = ['Controls/decorator'];
+    /**
+     * Приводит value к формату:
+     * 1. Значение должно иметь {Money.FRACTION_LENGTH} знака в дробной части. Недостоющие знаки заменяются нулями.
+     */
+    private static toFormat(value: string): string {
+        const dotPosition = value.indexOf('.');
 
-Money._private = _private;
+        if (dotPosition === -1) {
+            return value + `.${Money.ZERO_FRACTION_PATH}`;
+        }
 
-export = Money;
+        const fractionLength = value.length - dotPosition - 1;
+        if (fractionLength < Money.FRACTION_LENGTH) {
+            return value + '0'.repeat(Money.FRACTION_LENGTH - fractionLength);
+        }
+
+        return value;
+    }
+
+    static getDefaultOptions() {
+        return {
+            value: null,
+            style: 'default',
+            useGrouping: true,
+            showEmptyDecimals: true
+        };
+    }
+
+    static getOptionTypes() {
+        return {
+            style: descriptor(String).oneOf([
+                'default', 'accentResults', 'noAccentResults',
+                'group', 'basicRegistry', 'noBasicRegistry',
+                'accentRegistry', 'noAccentRegistry', 'error'
+            ]),
+            useGrouping: descriptor(Boolean),
+            showEmptyDecimals: descriptor(Boolean),
+            value: descriptor(String, Number, null)
+        };
+    }
+
+    static _theme = ['Controls/decorator']
+}
+
+export default Money;

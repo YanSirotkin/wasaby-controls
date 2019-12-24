@@ -1,3 +1,4 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
 import template = require('wml!Controls/_filter/Fast/Fast');
 import chain = require('Types/chain');
@@ -13,11 +14,13 @@ import {isEqual} from 'Types/object';
 import {dropdownHistoryUtils as historyUtils} from 'Controls/dropdown';
 import {getItemsWithHistory, getUniqItems} from 'Controls/_filter/HistoryUtils';
 
-/**
-       * Контрол "Быстрый фильтр".
-       * Использует выпадающие списки для фильтрации данных.
-       *
-       * <a href="/materials/demo-ws4-filter-search-new">Демо-пример</a>.
+      /**
+       * Контрол "Быстрый фильтр". Использует выпадающие списки для выбора параметров фильтрации.
+       * 
+       * @remark
+       * См. <a href="/materials/demo-ws4-filter-search-new">демо-пример</a>
+       * Подробнее об организации поиска и фильтрации в реестре читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/filter-search/ здесь}.
+       * Подробнее о классификации контролов Wasaby и схеме их взаимодействия читайте {@link https://wi.sbis.ru/doc/platform/developmentapl/interface-development/controls/list-environment/component-kinds/ здесь}.
        *
        * @class Controls/_filter/Fast
        * @extends Core/Control
@@ -26,7 +29,7 @@ import {getItemsWithHistory, getUniqItems} from 'Controls/_filter/HistoryUtils';
        * @demo Controls-demo/FastFilter/fastPG
        * @control
        * @public
-       * @deprecated Контрол устарел и в скором времени будет удалён, используйте {@link Controls/filter:View}.
+       * @deprecated Данный контрол устарел и будет удалён. Вместо него используйте {@link Controls/filter:View}.
        * @author Герасимов А.М.
        */
 
@@ -427,7 +430,10 @@ import {getItemsWithHistory, getUniqItems} from 'Controls/_filter/HistoryUtils';
             var config = {
                templateOptions: Merge(_private.getItemPopupConfig(this._configs[index]), templateOptions),
                className: (this._configs[index].multiSelect ? 'controls-FastFilter_multiSelect-popup' : 'controls-FastFilter-popup') + '_theme_' + this._options.theme,
-               fittingMode: 'overflow',
+               fittingMode: {
+                  horizontal: 'overflow',
+                  vertical: 'adaptive'
+               },
 
                // FIXME: this._container - jQuery element in old controls envirmoment https://online.sbis.ru/opendoc.html?guid=d7b89438-00b0-404f-b3d9-cc7e02e61bb3
                target: (this._container[0] || this._container).children[index]
@@ -477,7 +483,7 @@ import {getItemsWithHistory, getUniqItems} from 'Controls/_filter/HistoryUtils';
                config.text = text[0];
                config.title = text.join(', ');
                if (text.length > 1) {
-                  config.hasMoreText = ', ' + rk('еще ') + (text.length - 1);
+                  config.hasMoreText = ', ' + rk('еще') + ' ' + (text.length - 1);
                } else {
                   config.hasMoreText = '';
                }

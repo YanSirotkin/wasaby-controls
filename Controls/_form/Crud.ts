@@ -1,6 +1,7 @@
+import rk = require('i18n!Controls');
 import Control = require('Core/Control');
 import tmpl = require('wml!Controls/_form/Crud/Crud');
-import Env = require('Env/Env');
+import {Logger} from 'UI/Utils';
 
 let CRUD = Control.extend({
     _template: tmpl,
@@ -8,7 +9,7 @@ let CRUD = Control.extend({
 
     _afterMount(cfg) {
         if (!cfg.dataSource) {
-            Env.IoC.resolve('ILogger').error('Crud', 'Необходимо задать опцию dataSource');
+            Logger.error('Crud', 'Необходимо задать опцию dataSource', this);
         } else {
             this._dataSource = cfg.dataSource;
         }

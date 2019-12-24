@@ -2,7 +2,6 @@
  * Библиотека, содержащая интерфейсы, которые используются в нескольких библиотеках.
  * @library Controls/interface
  * @includes ITooltip Controls/_interface/ITooltip
- * @includes IButton Controls/_interface/IButton
  * @includes IIconStyle Controls/_interface/IIconStyle
  * @includes ICaption Controls/_interface/ICaption
  * @includes IIcon Controls/_interface/IIcon
@@ -23,8 +22,12 @@
  * @includes ITextValue Controls/_interface/ITextValue
  * @includes IPropStorage Controls/_interface/IPropStorage
  * @includes IBorderStyle Controls/_interface/IBorderStyle
+ * @includes IValidationStatus Controls/_interface/IValidationStatus
  * @includes ISelectionType Controls/_interface/ISelectionType
  * @includes IDateConstructor Controls/_interface/IDateConstructor
+ * @includes IApplication Controls/_interface/IApplication
+ * @includes IFilter Controls/_interface/IFilter
+ * @includes INavigation Controls/_interface/INavigation
  * @public
  * @author Крайнов Д.О.
  */
@@ -34,7 +37,7 @@
  */
 
 export {default as ITooltip, ITooltipOptions} from './_interface/ITooltip';
-export {default as IButton, IButtonOptions} from './_interface/IButton';
+export {default as IItemTemplate, IItemTemplateOptions} from './_interface/IItemTemplate';
 export {default as IIconStyle, IIconStyleOptions} from './_interface/IIconStyle';
 export {default as ICaption, ICaptionOptions} from './_interface/ICaption';
 export {default as IIcon, IIconOptions} from './_interface/IIcon';
@@ -54,5 +57,10 @@ export {default as ILookup, ILookupOptions} from './_interface/ILookup';
 export {default as IDateMask, IDateMaskOptions, dateMaskConstants} from './_interface/IDateMask';
 export {default as IPropStorage, IPropStorageOptions} from './_interface/IPropStorage';
 export {default as IBorderStyle, IBorderStyleOptions} from './_interface/IBorderStyle';
+export {default as IValidationStatus, IValidationStatusOptions, ValidationStatus} from './_interface/IValidationStatus';
 export {default as IDateConstructor, IDateConstructorOptions} from './_interface/IDateConstructor';
-export {default as ISelectionType, ISelectionTypeOptions, TSelectionType, TSelectionRecord, ISelectionObject} from './_interface/ISelectionType';
+export {default as ISelectionType, ISelectionTypeOptions, TSelectionType, TSelectionRecord, ISelectionObject, TKeySelection, TKeysSelection} from './_interface/ISelectionType';
+export {default as IApplication, IApplicationOptions, IAttributes, HeadJson} from './_interface/IApplication';
+export {default as IRUM, IRUMOptions} from './_interface/IRUM';
+export {default as IFilter, IFilterOptions} from './_interface/IFilter';
+export {default as INavigation, INavigationOptions, INavigationOptionValue} from './_interface/INavigation';

@@ -27,7 +27,9 @@ export default interface IIconStyle {
  * @variant warning
  * @variant danger
  * @variant info
+ * @variant label
  * @variant default
+ * @variant contrast
  * @default secondary
  * @remark
  * Цвет иконки задается константой из стандартного набора цветов, который определен для текущей темы оформления.

@@ -1,13 +1,13 @@
 export interface IButtonOptions {
     contrastBackground?: boolean;
     buttonStyle?: string;
-    viewMode?: string;
 }
 /**
- * Интерфейс для кнопок.
+ * Интерфейс для стилевого оформления кнопки.
  *
  * @interface Controls/_buttons/interface/IButton
  * @public
+ * @author Красильников А.С.
  */
 
 /*
@@ -15,56 +15,11 @@ export interface IButtonOptions {
  *
  * @interface Controls/_buttons/interface/IButton
  * @public
+ * @author Красильников А.С.
  */
 export interface IButton {
     readonly '[Controls/_buttons/interface/IButton]': boolean;
 }
-/**
- * @name Controls/_buttons/interface/IButton#viewMode
- * @cfg {Enum} Режим отображения кнопки.
- * @variant button В виде обычной кнопки по-умолчанию.
- * @variant link В виде гиперссылки.
- * @variant toolButton В виде кнопки для панели инструментов.
- * @default button
- * @demo Controls-demo/Buttons/ViewModes/Index
- * @example
- * Кнопка в режиме отображения 'link'.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="primary" viewMode="link" size="xl"/>
- * </pre>
- * Кнопка в режиме отображения 'toolButton'.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="danger" viewMode="toolButton"/>
- * </pre>
- * Кнопка в режиме отображения 'button'.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="success" viewMode="button"/>
- * </pre>
- * @see Size
- */
-
-/*
- * @name Controls/_buttons/interface/IButton#viewMode
- * @cfg {Enum} Button view mode.
- * @variant link Decorated hyperlink.
- * @variant button Default button.
- * @variant toolButton Toolbar button.
- * @default button
- * @example
- * Button with 'link' viewMode.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="primary" viewMode="link" size="xl"/>
- * </pre>
- * Button with 'toolButton' viewMode.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="danger" viewMode="toolButton"/>
- * </pre>
- * Button with 'button' viewMode.
- * <pre>
- *    <Controls.breadcrumbs:Path caption="Send document" style="success" viewMode="button"/>
- * </pre>
- * @see Size
- */
 
 /**
  * @name Controls/_buttons/interface/IButton#contrastBackground
